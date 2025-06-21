@@ -9,16 +9,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavController
 import com.example.studyio.ui.components.SignUp
 import com.example.studyio.ui.components.Login
 
 @Composable
-fun HomeScreen()  {
+fun HomeScreen(navController: NavController)  {
      Column(modifier = Modifier
          .padding(top = 100.dp, bottom = 16.dp)
          .fillMaxWidth()
@@ -41,11 +43,15 @@ fun HomeScreen()  {
              horizontalArrangement = Arrangement.SpaceBetween
          ) {
              Column(modifier = Modifier.weight(1f)) {
-                 Login()
+                 Button(onClick = {navController.navigate("login")}) {
+                     Text(text="Login", fontSize=40.sp)
+                 }
              }
 
              Column(modifier = Modifier.weight(1f)) {
-                 SignUp()
+                 Button(onClick = {navController.navigate("signup")}) {
+                     Text(text="signup", fontSize=40.sp)
+                 }
              }
          }
      }

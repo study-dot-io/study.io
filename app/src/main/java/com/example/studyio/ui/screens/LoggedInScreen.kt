@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun LoggedInScreen() {
     Column(modifier= Modifier.padding(16.dp)) {
-        Text(text="Row 1", modifier = Modifier.fillMaxWidth())
+        Text(text="Hello, Aditya", modifier = Modifier.fillMaxWidth())
 
         Spacer(modifier= Modifier.height(16.dp))
 

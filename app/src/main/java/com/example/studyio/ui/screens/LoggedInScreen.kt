@@ -11,9 +11,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.studyio.ui.components.renderClassList
 
 @Composable
-fun LoggedInScreen() {
+fun LoggedInScreen(navController: NavController) {
     Column(modifier= Modifier.padding(16.dp)) {
         Text(text="Hello, Aditya", modifier = Modifier.fillMaxWidth())
 
@@ -24,14 +26,18 @@ fun LoggedInScreen() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text="Col 1")
+                // My classes component
+                renderClassList()
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(text="Col 2")
+                // Add classes component
+                Text("Add class")
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text="Row 3", modifier = Modifier.fillMaxWidth())
+        // Upcoming deadlines component
+        Text("Upcoming deadlines")
+
     }
 }

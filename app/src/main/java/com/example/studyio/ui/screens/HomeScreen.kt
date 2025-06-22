@@ -43,14 +43,15 @@ fun HomeScreen(navController: NavController)  {
              horizontalArrangement = Arrangement.SpaceBetween
          ) {
              Column(modifier = Modifier.weight(1f)) {
-                 Button(onClick = {navController.navigate("login")}) {
+                 // For the demo I am redirecting it to the LoggedIn component
+                 Button(onClick = {navController.navigate("logedin")}) {
                      Text(text="Login", fontSize=40.sp)
                  }
              }
 
              Column(modifier = Modifier.weight(1f)) {
                  Button(onClick = {navController.navigate("signup")}) {
-                     Text(text="signup", fontSize=40.sp)
+                     Text(text="Signup", fontSize=40.sp)
                  }
              }
          }

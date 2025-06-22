@@ -5,6 +5,7 @@ import androidx.navigation.compose.*
 import com.example.studyio.ui.components.Login
 import com.example.studyio.ui.components.SignUp
 import com.example.studyio.ui.screens.HomeScreen
+import com.example.studyio.ui.screens.LoggedInScreen
 
 @Composable
 fun MainNavigation() {
@@ -14,5 +15,6 @@ fun MainNavigation() {
         composable("home") {HomeScreen(navController)}
         composable("login") {Login()}
         composable("signup") { SignUp() }
+        composable("loggedin"){LoggedInScreen(navController)}
     }
 }

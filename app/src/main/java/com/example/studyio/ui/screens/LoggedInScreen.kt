@@ -27,7 +27,7 @@ fun LoggedInScreen(navController: NavController) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 // My classes component
-                renderClassList()
+                renderClassList(navController)
             }
 
             Column(modifier = Modifier.weight(1f)) {

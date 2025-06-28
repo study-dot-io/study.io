@@ -44,7 +44,7 @@ fun HomeScreen(navController: NavController)  {
          ) {
              Column(modifier = Modifier.weight(1f)) {
                  // For the demo I am redirecting it to the LoggedIn component
-                 Button(onClick = {navController.navigate("logedin")}) {
+                 Button(onClick = {navController.navigate("loggedin")}) {
                      Text(text="Login", fontSize=40.sp)
                  }
              }

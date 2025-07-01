@@ -1,10 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
+    <!-- Modern Dark Theme Colors for Anki Clone -->
+    <color name="primary">#FF6366F1</color>
+    <color name="primary_dark">#FF4F46E5</color>
+    <color name="primary_variant">#FF3730A3</color>
+    
+    <color name="secondary">#FF10B981</color>
+    <color name="secondary_dark">#FF059669</color>
+    <color name="secondary_variant">#FF047857</color>
+    
+    <color name="accent">#FFF59E20</color>
+    <color name="accent_dark">#FFD97706</color>
+    
+    <color name="background">#FF0F172A</color>
+    <color name="surface">#FF1E293B</color>
+    <color name="surface_variant">#FF334155</color>
+    
+    <color name="error">#FFEF4444</color>
+    <color name="error_dark">#FFDC2626</color>
+    
+    <color name="success">#FF10B981</color>
+    <color name="warning">#FFF59E20</color>
+    
+    <color name="on_primary">#FFFFFFFF</color>
+    <color name="on_secondary">#FFFFFFFF</color>
+    <color name="on_background">#FFFFFFFF</color>
+    <color name="on_surface">#FFFFFFFF</color>
+    <color name="on_surface_variant">#FFCBD5E1</color>
+    <color name="on_error">#FFFFFFFF</color>
+    
+    <!-- Legacy colors for compatibility -->
     <color name="white">#FFFFFFFF</color>
 </resources>

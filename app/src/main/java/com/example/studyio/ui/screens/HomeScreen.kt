@@ -29,50 +29,15 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    decks: List<Deck>,
+    dueCards: Int,
+    todayReviews: Int,
+    totalCards: Int,
+    totalDecks: Int,
     onDeckClick: (Deck) -> Unit = {},
     onCreateDeck: () -> Unit = {},
     onStudyNow: () -> Unit = {}
 ) {
-    val sampleDecks = remember {
-        listOf(
-            Deck(
-                id = 1,
-                name = "Biology Fundamentals",
-                description = "Basic concepts in biology",
-                cardCount = 150,
-                lastStudied = LocalDateTime.now().minusDays(1),
-                color = "#10B981"
-            ),
-            Deck(
-                id = 2,
-                name = "Spanish Vocabulary",
-                description = "Essential Spanish words and phrases",
-                cardCount = 89,
-                lastStudied = LocalDateTime.now().minusHours(3),
-                color = "#F59E20"
-            ),
-            Deck(
-                id = 3,
-                name = "Math Formulas",
-                description = "Important mathematical formulas",
-                cardCount = 67,
-                lastStudied = LocalDateTime.now().minusDays(2),
-                color = "#6366F1"
-            ),
-            Deck(
-                id = 4,
-                name = "History Timeline",
-                description = "Key historical events",
-                cardCount = 234,
-                lastStudied = LocalDateTime.now().minusDays(5),
-                color = "#EF4444"
-            )
-        )
-    }
-
-    val dueCards = remember { 23 }
-    val todayReviews = remember { 45 }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -123,7 +88,10 @@ fun HomeScreen(
 
             item {
                 // Quick Stats
-                QuickStatsCard()
+                QuickStatsCard(
+                    totalDecks = totalDecks,
+                    totalCards = totalCards
+                )
             }
 
             item {
@@ -134,7 +102,7 @@ fun HomeScreen(
                 )
             }
 
-            items(sampleDecks) { deck ->
+            items(decks) { deck ->
                 DeckCard(
                     deck = deck,
                     onClick = { onDeckClick(deck) }
@@ -218,7 +186,10 @@ fun StudyNowCard(
 }
 
 @Composable
-fun QuickStatsCard() {
+fun QuickStatsCard(
+    totalDecks: Int,
+    totalCards: Int
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -234,12 +205,12 @@ fun QuickStatsCard() {
         ) {
             StatItem(
                 icon = Icons.Default.Folder,
-                value = "4",
+                value = totalDecks.toString(),
                 label = "Decks"
             )
             StatItem(
                 icon = Icons.Default.Star,
-                value = "540",
+                value = totalCards.toString(),
                 label = "Total Cards"
             )
             StatItem(

@@ -26,6 +26,7 @@ import com.example.studyio.ui.AppState
 import com.example.studyio.ui.Screen
 import com.example.studyio.ui.screens.CreateDeckScreen
 import com.example.studyio.ui.screens.HomeScreen
+import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.theme.StudyIOTheme
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -49,6 +50,16 @@ import androidx.compose.material3.TextButton
 import androidx.room.Room
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
+import androidx.activity.result.contract.ActivityResultContracts
+import android.content.Context
+import android.net.Uri
+import java.util.zip.ZipInputStream
+import android.database.sqlite.SQLiteDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import org.json.JSONObject
+import java.io.File
+import androidx.activity.compose.rememberLauncherForActivityResult
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,6 +106,14 @@ fun StudyIOApp() {
 
     when (val screen = appState.currentScreen) {
         is Screen.Home -> {
+            val importApkgLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.OpenDocument(),
+                onResult = { uri: Uri? ->
+                    if (uri != null) {
+                        importAnkiApkg(context, db, uri)
+                    }
+                }
+            )
             HomeScreen(
                 decks = appState.decks,
                 dueCards = appState.dueCards,
@@ -109,6 +128,9 @@ fun StudyIOApp() {
                 },
                 onStudyNow = {
                     // TODO: Navigate to study screen
+                },
+                onImportApkg = {
+                    importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
                 }
             )
         }
@@ -309,5 +331,94 @@ fun NotePreviewCard(note: Note) {
 fun StudyIOAppPreview() {
     StudyIOTheme {
         StudyIOApp()
+    }
+}
+
+fun importAnkiApkg(context: Context, db: StudyioDatabase, uri: Uri) {
+    val appScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    appScope.launch {
+        // 1. Unzip .apkg
+        val zipInput = ZipInputStream(context.contentResolver.openInputStream(uri))
+        var collectionFile: File? = null
+        while (true) {
+            val entry = zipInput.nextEntry ?: break
+            if (entry.name == "collection.anki2") {
+                collectionFile = File.createTempFile("collection", ".anki2", context.cacheDir)
+                collectionFile.outputStream().use { zipInput.copyTo(it) }
+            }
+            zipInput.closeEntry()
+        }
+        zipInput.close()
+        if (collectionFile == null) return@launch
+
+        // 2. Open SQLite
+        val ankiDb = SQLiteDatabase.openDatabase(collectionFile.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+
+        // 3. Read col table for decks
+        val colCursor = ankiDb.rawQuery("SELECT * FROM col", null)
+        val decksMap = mutableMapOf<Long, Pair<String, String?>>()
+        if (colCursor.moveToFirst()) {
+            val decksJson = colCursor.getString(colCursor.getColumnIndexOrThrow("decks"))
+            val decksObj = JSONObject(decksJson)
+            for (key in decksObj.keys()) {
+                val deckObj = decksObj.getJSONObject(key)
+                val id = deckObj.getLong("id")
+                val name = deckObj.getString("name")
+                val desc = deckObj.optString("desc", null)
+                decksMap[id] = name to desc
+                // Insert deck
+                db.deckDao().insertDeck(
+                    com.example.studyio.data.entities.Deck(
+                        id = id,
+                        name = name,
+                        description = desc
+                    )
+                )
+            }
+        }
+        colCursor.close()
+
+        // 4. Read notes
+        val notesCursor = ankiDb.rawQuery("SELECT id, mid, flds, tags, guid FROM notes", null)
+        val noteIdMap = mutableMapOf<Long, Long>() // Anki note id -> local note id
+        while (notesCursor.moveToNext()) {
+            val id = notesCursor.getLong(0)
+            val modelId = notesCursor.getLong(1)
+            val fields = notesCursor.getString(2)
+            val tags = notesCursor.getString(3)
+            val guid = notesCursor.getString(4)
+            val note = com.example.studyio.data.entities.Note(
+                id = id,
+                modelId = modelId,
+                fields = fields,
+                tags = tags,
+                guid = guid
+            )
+            db.noteDao().insertNote(note)
+            noteIdMap[id] = id
+        }
+        notesCursor.close()
+
+        // 5. Read cards
+        val cardsCursor = ankiDb.rawQuery("SELECT id, nid, did, ord, type, queue, due, ivl, reps, lapses FROM cards", null)
+        while (cardsCursor.moveToNext()) {
+            val deckId = cardsCursor.getLong(2)
+            val noteId = cardsCursor.getLong(1)
+            val card = com.example.studyio.data.entities.Card(
+                deckId = deckId,
+                noteId = noteId,
+                ord = cardsCursor.getInt(3),
+                type = cardsCursor.getInt(4),
+                queue = cardsCursor.getInt(5),
+                due = cardsCursor.getInt(6),
+                interval = cardsCursor.getInt(7),
+                reps = cardsCursor.getInt(8),
+                lapses = cardsCursor.getInt(9)
+            )
+            db.cardDao().insertCard(card)
+        }
+        cardsCursor.close()
+        ankiDb.close()
+        collectionFile.delete()
     }
 } 

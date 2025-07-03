@@ -131,6 +131,30 @@ interface DeckDao {
 }
 
 /**
+ * Data Access Object for Card entity.
+ */
+@Dao
+interface CardDao {
+    /**
+     * Insert a card and return its new id.
+     */
+    @Insert
+    suspend fun insertCard(card: Card): Long
+
+    /**
+     * Get all cards for a given deckId.
+     */
+    @Query("SELECT * FROM cards WHERE deckId = :deckId")
+    suspend fun getCardsForDeck(deckId: Long): List<Card>
+
+    /**
+     * Get all cards for a given noteId.
+     */
+    @Query("SELECT * FROM cards WHERE noteId = :noteId")
+    suspend fun getCardsForNote(noteId: Long): List<Card>
+}
+
+/**
  * Type converters for Room to handle java.time.LocalDateTime.
  */
 class Converters {
@@ -149,7 +173,7 @@ class Converters {
 abstract class StudyioDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun deckDao(): DeckDao
-    // Add DAOs for Card as needed
+    abstract fun cardDao(): CardDao
 }
 
 

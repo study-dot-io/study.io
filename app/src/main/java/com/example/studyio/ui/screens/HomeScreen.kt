@@ -36,7 +36,8 @@ fun HomeScreen(
     totalDecks: Int,
     onDeckClick: (Deck) -> Unit = {},
     onCreateDeck: () -> Unit = {},
-    onStudyNow: () -> Unit = {}
+    onStudyNow: () -> Unit = {},
+    onImportApkg: (() -> Unit)? = null
 ) {
     Scaffold(
         topBar = {
@@ -59,12 +60,34 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateDeck,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Create Deck")
+            var fabExpanded by remember { mutableStateOf(false) }
+            Box {
+                FloatingActionButton(
+                    onClick = { fabExpanded = !fabExpanded },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Actions")
+                }
+                DropdownMenu(
+                    expanded = fabExpanded,
+                    onDismissRequest = { fabExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Create Deck") },
+                        onClick = {
+                            fabExpanded = false
+                            onCreateDeck()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Import Anki Deck (.apkg)") },
+                        onClick = {
+                            fabExpanded = false
+                            if (onImportApkg != null) onImportApkg()
+                        }
+                    )
+                }
             }
         }
     ) { paddingValues ->

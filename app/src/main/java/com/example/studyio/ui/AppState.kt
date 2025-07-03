@@ -14,32 +14,7 @@ sealed class Screen {
 
 data class AppState(
     val currentScreen: Screen = Screen.Home,
-    val decks: List<Deck> = listOf(
-        Deck(
-            id = 1,
-            name = "Biology Fundamentals",
-            description = "Basic concepts in biology",
-            color = "#10B981"
-        ),
-        Deck(
-            id = 2,
-            name = "Spanish Vocabulary",
-            description = "Essential Spanish words and phrases",
-            color = "#F59E20"
-        ),
-        Deck(
-            id = 3,
-            name = "Math Formulas",
-            description = "Important mathematical formulas",
-            color = "#6366F1"
-        ),
-        Deck(
-            id = 4,
-            name = "History Timeline",
-            description = "Key historical events",
-            color = "#EF4444"
-        )
-    )
+    val decks: List<Deck> = emptyList()
 ) {
     fun navigateTo(screen: Screen): AppState = copy(currentScreen = screen)
     

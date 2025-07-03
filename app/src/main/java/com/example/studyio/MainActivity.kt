@@ -48,6 +48,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.room.Room
 import java.util.UUID
+import kotlinx.coroutines.Dispatchers
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,8 +68,31 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun StudyIOApp() {
-    var appState by remember { mutableStateOf(AppState()) }
-    
+    val context = LocalContext.current
+    val db = remember {
+        Room.databaseBuilder(
+            context,
+            StudyioDatabase::class.java,
+            "studyio.db"
+        ).fallbackToDestructiveMigration().build()
+    }
+    val coroutineScope = rememberCoroutineScope()
+    var decks by remember { mutableStateOf<List<com.example.studyio.data.entities.Deck>>(emptyList()) }
+
+    // Load decks from the database
+    LaunchedEffect(Unit) {
+        coroutineScope.launch(Dispatchers.IO) {
+            decks = db.deckDao().getAllDecks()
+        }
+    }
+
+    var appState by remember { mutableStateOf(AppState(decks = decks)) }
+
+    // Keep appState.decks in sync with DB
+    LaunchedEffect(decks) {
+        appState = appState.copy(decks = decks)
+    }
+
     when (val screen = appState.currentScreen) {
         is Screen.Home -> {
             HomeScreen(
@@ -94,7 +118,11 @@ fun StudyIOApp() {
                     appState = appState.navigateTo(Screen.Home)
                 },
                 onDeckCreated = { newDeck ->
-                    appState = appState.addDeck(newDeck).navigateTo(Screen.Home)
+                    coroutineScope.launch(Dispatchers.IO) {
+                        db.deckDao().insertDeck(newDeck)
+                        decks = db.deckDao().getAllDecks()
+                    }
+                    appState = appState.navigateTo(Screen.Home)
                 }
             )
         }
@@ -131,7 +159,7 @@ fun DeckDetailScreen(deckId: Long, onBack: () -> Unit) {
     }
 
     fun addNote() {
-        coroutineScope.launch {
+        coroutineScope.launch(Dispatchers.IO) {
             val note = Note(
                 modelId = 1L,
                 fields = listOf(field1, field2).joinToString("\u001F"),

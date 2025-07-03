@@ -292,52 +292,19 @@ fun DeckCard(
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = deck.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Folder,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
+                deck.description?.let {
                     Text(
-                        text = "${deck.cardCount} cards",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
-                    Spacer(modifier = Modifier.width(16.dp))
-                    
-                    deck.lastStudied?.let { lastStudied ->
-                        Icon(
-                            imageVector = Icons.Default.AccessTime,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = formatLastStudied(lastStudied),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
-            
-            // Study button
+            // Study button (can be repurposed for navigation)
             IconButton(onClick = onClick) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Study Deck",
+                    contentDescription = "View Deck",
                     tint = MaterialTheme.colorScheme.primary
                 )
             }

@@ -161,6 +161,7 @@ fun CreateDeckScreen(
             Button(
                 onClick = {
                     val newDeck = Deck(
+                        id = System.currentTimeMillis(),
                         name = deckName.trim(),
                         description = deckDescription.trim(),
                         color = selectedColor

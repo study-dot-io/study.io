@@ -74,7 +74,7 @@ fun StudyIOApp() {
             context,
             StudyioDatabase::class.java,
             "studyio.db"
-        ).fallbackToDestructiveMigration().build()
+        ).fallbackToDestructiveMigration(true).build()
     }
     val coroutineScope = rememberCoroutineScope()
     var decks by remember { mutableStateOf<List<com.example.studyio.data.entities.Deck>>(emptyList()) }

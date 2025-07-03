@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.studyio"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -40,6 +40,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -54,6 +58,7 @@ dependencies {
     // Room dependencies
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+    implementation(libs.androidx.room.common.jvm)
     ksp("androidx.room:room-compiler:2.6.1")
     
     // Navigation

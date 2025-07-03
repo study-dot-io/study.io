@@ -34,12 +34,20 @@ import androidx.compose.foundation.lazy.grid.items
 import com.example.studyio.data.entities.Note
 import com.example.studyio.data.entities.StudyioDatabase
 import kotlinx.coroutines.launch
-import com.example.studyio.data.entities.Card
 import java.time.LocalDateTime
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.room.Room
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,73 +115,119 @@ fun DeckDetailScreen(deckId: Long, onBack: () -> Unit) {
             context,
             StudyioDatabase::class.java,
             "studyio.db"
-        ).build()
+        ).fallbackToDestructiveMigration(true).build()
     }
     val coroutineScope = rememberCoroutineScope()
     var notes by remember { mutableStateOf<List<Note>>(emptyList()) }
-    var showMockButton by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
+    var field1 by remember { mutableStateOf("") }
+    var field2 by remember { mutableStateOf("") }
+    var tags by remember { mutableStateOf("") }
 
     LaunchedEffect(deckId) {
         coroutineScope.launch {
             notes = db.noteDao().getNotesForDeck(deckId)
-            showMockButton = notes.isEmpty()
         }
     }
 
-    fun addMockNotes() {
+    fun addNote() {
         coroutineScope.launch {
-            // Insert 3 mock notes and cards
-            val mockNotes = listOf(
-                Note(modelId = 1, fields = "Capital of France\u001FParis", tags = "geography"),
-                Note(modelId = 1, fields = "Largest planet\u001FJupiter", tags = "astronomy"),
-                Note(modelId = 1, fields = "Fastest land animal\u001FCheetah", tags = "biology")
+            val note = Note(
+                modelId = 1L,
+                fields = listOf(field1, field2).joinToString("\u001F"),
+                tags = tags.trim(),
+                guid = UUID.randomUUID().toString()
             )
-            val noteIds = mockNotes.map { db.noteDao().insertNote(it) }
-            noteIds.forEachIndexed { idx, noteId ->
-                db.runInTransaction {
-                    db.compileStatement("INSERT INTO cards (deckId, noteId, ord, type, queue, due, interval, reps, lapses, createdAt, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").apply {
-                        bindLong(1, deckId)
-                        bindLong(2, noteId)
-                        bindLong(3, 0)
-                        bindLong(4, 0)
-                        bindLong(5, 0)
-                        bindLong(6, idx + 1L)
-                        bindLong(7, 0)
-                        bindLong(8, 0)
-                        bindLong(9, 0)
-                        bindString(10, LocalDateTime.now().toString())
-                        bindLong(11, 1)
-                        executeInsert()
-                    }
+            val noteId = db.noteDao().insertNote(note)
+            db.runInTransaction {
+                db.compileStatement("INSERT INTO cards (deckId, noteId, ord, type, queue, due, interval, reps, lapses, createdAt, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").apply {
+                    bindLong(1, deckId)
+                    bindLong(2, noteId)
+                    bindLong(3, 0)
+                    bindLong(4, 0)
+                    bindLong(5, 0)
+                    bindLong(6, 1L)
+                    bindLong(7, 0)
+                    bindLong(8, 0)
+                    bindLong(9, 0)
+                    bindString(10, LocalDateTime.now().toString())
+                    bindLong(11, 1)
+                    executeInsert()
                 }
             }
             notes = db.noteDao().getNotesForDeck(deckId)
-            showMockButton = false
+            showDialog = false
+            field1 = ""
+            field2 = ""
+            tags = ""
         }
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Box {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Deck Detail", style = MaterialTheme.typography.headlineMedium)
-                Button(onClick = onBack) { Text("Back") }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            if (notes.isEmpty()) {
-                Text("No notes in this deck.", style = MaterialTheme.typography.bodyLarge)
-                if (showMockButton) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { addMockNotes() }) { Text("Add Mock Notes") }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Deck Detail", style = MaterialTheme.typography.headlineMedium)
+                    Button(onClick = onBack) { Text("Back") }
                 }
-            } else {
-                NotesGrid(notes = notes)
+                Spacer(modifier = Modifier.height(16.dp))
+                if (notes.isEmpty()) {
+                    Text("No notes in this deck.", style = MaterialTheme.typography.bodyLarge)
+                } else {
+                    NotesGrid(notes = notes)
+                }
+            }
+            FloatingActionButton(
+                onClick = { showDialog = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Note")
+            }
+            if (showDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    title = { Text("Add Note") },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = field1,
+                                onValueChange = { field1 = it },
+                                label = { Text("Field 1") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = field2,
+                                onValueChange = { field2 = it },
+                                label = { Text("Field 2") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = tags,
+                                onValueChange = { tags = it },
+                                label = { Text("Tags (space-separated)") },
+                                singleLine = true
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = { addNote() },
+                            enabled = field1.isNotBlank() || field2.isNotBlank()
+                        ) { Text("Add") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDialog = false }) { Text("Cancel") }
+                    }
+                )
             }
         }
     }

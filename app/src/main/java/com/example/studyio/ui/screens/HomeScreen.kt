@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.studyio.data.entities.Deck
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import androidx.core.graphics.toColorInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -277,7 +277,7 @@ fun DeckCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(android.graphics.Color.parseColor(deck.color)))
+                    .background(Color(deck.color.toColorInt()))
             )
             
             Spacer(modifier = Modifier.width(16.dp))

@@ -1,5 +1,6 @@
 package com.example.studyio.data.entities
 
+import android.content.Context
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
@@ -11,6 +12,7 @@ import androidx.room.Insert
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.Index
+import androidx.room.Room
 
 /**
  * Deck entity representing a collection of flashcards.
@@ -34,6 +36,7 @@ data class Deck(
  * @param modelId Note type/model ID (for field/template mapping)
  * @param fields Field values, delimited by 0x1f (unit separator)
  * @param tags Space-separated tags for the note
+ * @param guid Unique identifier for the note, generated if not provided
  */
 @Entity(tableName = "notes")
 data class Note(
@@ -41,7 +44,8 @@ data class Note(
     val id: Long = 0,
     val modelId: Long,
     val fields: String, // 0x1f-delimited string
-    val tags: String // space-separated
+    val tags: String, // space-separated
+    val guid: String = java.util.UUID.randomUUID().toString() // Unique identifier
 )
 
 /**
@@ -80,7 +84,7 @@ data class Note(
         Index(value = ["noteId"])
     ]
 )
-data class Card(
+data class Card  constructor(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val deckId: Long,
@@ -128,9 +132,11 @@ class Converters {
 /**
  * The Room database for StudyIO, including Deck, Note, and Card entities.
  */
-@Database(entities = [Deck::class, Note::class, Card::class], version = 1)
+@Database(entities = [Deck::class, Note::class, Card::class], version = 2)
 @TypeConverters(Converters::class)
 abstract class StudyioDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     // Add DAOs for Deck and Card as needed
-} 
+}
+
+

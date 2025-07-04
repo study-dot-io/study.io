@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.studyio.data.entities.Deck
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import androidx.core.graphics.toColorInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +36,8 @@ fun HomeScreen(
     totalDecks: Int,
     onDeckClick: (Deck) -> Unit = {},
     onCreateDeck: () -> Unit = {},
-    onStudyNow: () -> Unit = {}
+    onStudyNow: () -> Unit = {},
+    onImportApkg: (() -> Unit)? = null
 ) {
     Scaffold(
         topBar = {
@@ -59,12 +60,34 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateDeck,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Create Deck")
+            var fabExpanded by remember { mutableStateOf(false) }
+            Box {
+                FloatingActionButton(
+                    onClick = { fabExpanded = !fabExpanded },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Actions")
+                }
+                DropdownMenu(
+                    expanded = fabExpanded,
+                    onDismissRequest = { fabExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Create Deck") },
+                        onClick = {
+                            fabExpanded = false
+                            onCreateDeck()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Import Anki Deck (.apkg)") },
+                        onClick = {
+                            fabExpanded = false
+                            if (onImportApkg != null) onImportApkg()
+                        }
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -277,7 +300,7 @@ fun DeckCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(android.graphics.Color.parseColor(deck.color)))
+                    .background(Color(deck.color.toColorInt()))
             )
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -292,52 +315,19 @@ fun DeckCard(
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = deck.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Folder,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
+                deck.description?.let {
                     Text(
-                        text = "${deck.cardCount} cards",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
-                    Spacer(modifier = Modifier.width(16.dp))
-                    
-                    deck.lastStudied?.let { lastStudied ->
-                        Icon(
-                            imageVector = Icons.Default.AccessTime,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = formatLastStudied(lastStudied),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
-            
-            // Study button
+            // Study button (can be repurposed for navigation)
             IconButton(onClick = onClick) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Study Deck",
+                    contentDescription = "View Deck",
                     tint = MaterialTheme.colorScheme.primary
                 )
             }

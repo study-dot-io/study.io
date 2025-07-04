@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.studyio.data.entities.Note
+import com.example.studyio.data.entities.Card
 import com.example.studyio.data.entities.StudyioDatabase
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -17,11 +18,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import java.time.LocalDateTime
-import java.util.UUID
-import com.example.studyio.data.entities.Card
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeckDetailScreen(deckId: Long, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -47,64 +46,120 @@ fun DeckDetailScreen(deckId: Long, onBack: () -> Unit) {
         }
     }
 
-    fun addNote() {
-        coroutineScope.launch(Dispatchers.IO) {
-            val note = Note(
-                modelId = 1L,
-                fields = listOf(field1, field2).joinToString("\u001F"),
-                tags = tags.trim(),
-                guid = UUID.randomUUID().toString()
-            )
-            val noteId = db.noteDao().insertNote(note)
-            val card = Card(
-                deckId = deckId,
-                noteId = noteId,
-                ord = 0,
-                type = 0,
-                queue = 0,
-                due = 1,
-                interval = 0,
-                reps = 0,
-                lapses = 0
-            )
-            db.cardDao().insertCard(card)
-            notes = db.noteDao().getNotesForDeck(deckId)
-            showDialog = false
-            field1 = ""
-            field2 = ""
-            tags = ""
-        }
-    }
-
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Box {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Deck Detail", style = MaterialTheme.typography.headlineMedium)
-                    Button(onClick = onBack) { Text("Back") }
+    // Use Scaffold for proper screen structure and dialog overlay
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Deck Detail") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                if (notes.isEmpty()) {
-                    Text("No notes in this deck.", style = MaterialTheme.typography.bodyLarge)
-                } else {
-                    NotesGrid(notes = notes)
-                }
-            }
+            )
+        },
+        floatingActionButton = {
             FloatingActionButton(
-                onClick = { showDialog = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(24.dp)
+                onClick = { showDialog = true }
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Note")
+                Icon(Icons.Default.Add, contentDescription = "Add Card")
             }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues) // Apply padding from Scaffold
+                .padding(horizontal = 16.dp) // Add horizontal padding for content
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+            if (notes.isEmpty()) {
+                Text("No cards in this deck.", style = MaterialTheme.typography.bodyLarge)
+            } else {
+                NotesGrid(notes = notes)
+            }
+        }
+
+        // Show dialog for adding a new card; triggered by the FloatingActionButton
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Add Card") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = field1,
+                            onValueChange = { field1 = it },
+                            label = { Text("Front") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = field2,
+                            onValueChange = { field2 = it },
+                            label = { Text("Back") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = tags,
+                            onValueChange = { tags = it },
+                            label = { Text("Tags (space-separated)") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        coroutineScope.launch {
+                            try {
+                                // Create the note first
+                                val newNote = Note.create(
+                                    modelId = 1L, // Basic card model
+                                    fields = listOf(field1.trim(), field2.trim()),
+                                    tags = tags.trim()
+                                )
+
+                                // Insert the note and get its ID
+                                val noteId = db.noteDao().insertNote(newNote)
+
+                                // Create a card from the note
+                                val newCard = Card(
+                                    deckId = deckId,
+                                    noteId = noteId,
+                                    ord = 0, // First template (front/back)
+                                    type = 0, // New card
+                                    queue = 0, // New card queue
+                                    due = 1 // New cards start with due=1
+                                )
+
+                                // Insert the card
+                                db.cardDao().insertCard(newCard)
+
+                                // Refresh the notes list
+                                notes = db.noteDao().getNotesForDeck(deckId)
+
+                                // Close dialog and clear fields
+                                showDialog = false
+                                field1 = ""
+                                field2 = ""
+                                tags = ""
+                            } catch (e: Exception) {
+                                // Handle error - you might want to show a toast or error message
+                                println("Error creating card: ${e.message}")
+                            }
+                        }
+                    }) {
+                        Text("Add")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { showDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
@@ -125,14 +180,21 @@ fun NotesGrid(notes: List<Note>) {
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    note.fields.split("\u001F").forEachIndexed { idx, field ->
-                        Text("Field ${'$'}idx: ${'$'}field", style = MaterialTheme.typography.bodyMedium)
+                    val fields = note.fields.split("\u001F")
+                    if (fields.size >= 2) {
+                        Text("Front: ${fields[0]}", style = MaterialTheme.typography.bodyMedium)
+                        Text("Back: ${fields[1]}", style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        // Fallback for malformed fields
+                        note.fields.split("\u001F").forEachIndexed { idx, field ->
+                            Text("Field $idx: $field", style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                     if (note.tags.isNotBlank()) {
-                        Text("Tags: ${'$'}{note.tags}", style = MaterialTheme.typography.bodySmall)
+                        Text("Tags: ${note.tags}", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
         }
     }
-} 
+}

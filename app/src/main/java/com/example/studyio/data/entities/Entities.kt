@@ -1,18 +1,16 @@
 package com.example.studyio.data.entities
 
-import android.content.Context
+import androidx.room.Dao
+import androidx.room.Database
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.Dao
-import androidx.room.Query
+import androidx.room.Index
 import androidx.room.Insert
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
-import androidx.room.Index
-import androidx.room.Room
 
 /**
  * Deck entity representing a collection of flashcards.
@@ -42,11 +40,27 @@ data class Deck(
 data class Note(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val modelId: Long,
-    val fields: String, // 0x1f-delimited string
-    val tags: String, // space-separated
+    val modelId: Long = 1,
+    val fields: String = "", // Fields delimited by 0x1f (unit separator)
+    val tags: String = "", // space-separated
     val guid: String = java.util.UUID.randomUUID().toString() // Unique identifier
-)
+) {
+    companion object {
+        fun create(
+            modelId: Long = 1,
+            fields: List<String> = emptyList(),
+            tags: String = "",
+            guid: String = java.util.UUID.randomUUID().toString()
+        ): Note {
+            return Note(
+                modelId = modelId,
+                fields = fields.joinToString("\u001F"),
+                tags = tags.trim(),
+                guid = guid
+            )
+        }
+    }
+}
 
 /**
  * Card entity representing a reviewable flashcard generated from a note and template.
@@ -84,7 +98,7 @@ data class Note(
         Index(value = ["noteId"])
     ]
 )
-data class Card  constructor(
+data class Card(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val deckId: Long,

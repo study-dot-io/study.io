@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") version "2.0.21-1.0.27"
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -66,8 +67,20 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.12.2")
     
     // Navigation
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-    
+    val nav_version = "2.9.1"
+    // Jetpack Compose integration
+    implementation("androidx.navigation:navigation-compose:$nav_version")
+
+    // Views/Fragments integration
+    implementation("androidx.navigation:navigation-fragment:$nav_version")
+    implementation("androidx.navigation:navigation-ui:$nav_version")
+
+    // Feature module support for Fragments
+    implementation("androidx.navigation:navigation-dynamic-features-fragment:$nav_version")
+
+    // Testing Navigation
+    androidTestImplementation("androidx.navigation:navigation-testing:$nav_version")
+
     // Material Icons
     implementation("androidx.compose.material:material-icons-extended")
     testImplementation(libs.junit)

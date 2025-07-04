@@ -146,7 +146,6 @@ fun DeckDetailScreen(deckId: Long, onBack: () -> Unit) {
                                 field2 = ""
                                 tags = ""
                             } catch (e: Exception) {
-                                // Handle error - you might want to show a toast or error message
                                 println("Error creating card: ${e.message}")
                             }
                         }

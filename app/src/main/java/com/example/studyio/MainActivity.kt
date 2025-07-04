@@ -23,11 +23,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.room.Room
 import com.example.studyio.data.entities.StudyioDatabase
 import com.example.studyio.data.importAnkiApkgFromStream
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.studyio.ui.AppState
-import com.example.studyio.ui.Screen
 import com.example.studyio.ui.screens.CreateDeckScreen
 import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.screens.HomeScreen
+import com.example.studyio.ui.screens.CreateCardScreen
 import com.example.studyio.ui.theme.StudyIOTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,14 +74,15 @@ fun StudyIOApp() {
     }
 
     var appState by remember { mutableStateOf(AppState(decks = decks)) }
+    val navController = rememberNavController()
 
     // Keep appState.decks in sync with DB
     LaunchedEffect(decks) {
         appState = appState.copy(decks = decks)
     }
 
-    when (val screen = appState.currentScreen) {
-        is Screen.Home -> {
+    NavHost(navController = navController, startDestination = "home") {
+        composable("home") {
             val importApkgLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.OpenDocument(),
                 onResult = { uri: Uri? ->
@@ -94,10 +98,10 @@ fun StudyIOApp() {
                 totalCards = appState.totalCards,
                 totalDecks = appState.totalDecks,
                 onDeckClick = { deck ->
-                    appState = appState.navigateTo(Screen.DeckDetail(deck.id))
+                    navController.navigate("decks/${deck.id}")
                 },
                 onCreateDeck = {
-                    appState = appState.navigateTo(Screen.CreateDeck)
+                    navController.navigate("decks/create")
                 },
                 onStudyNow = {
                     // TODO: Navigate to study screen
@@ -107,24 +111,26 @@ fun StudyIOApp() {
                 }
             )
         }
-        is Screen.CreateDeck -> {
+        composable("decks/create") {
             CreateDeckScreen(
                 onBackPressed = {
-                    appState = appState.navigateTo(Screen.Home)
+                    navController.navigate("home") // popBackStack could be used
                 },
                 onDeckCreated = { newDeck ->
                     coroutineScope.launch(Dispatchers.IO) {
                         db.deckDao().insertDeck(newDeck)
                         decks = db.deckDao().getAllDecks()
                     }
-                    appState = appState.navigateTo(Screen.Home)
+                    navController.navigate("home")
                 }
             )
         }
-        is Screen.DeckDetail -> {
+        composable("decks/{id}"){
+            backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString("id") ?: error("missing deck id")
             DeckDetailScreen(
-                deckId = screen.deckId,
-                onBack = { appState = appState.navigateTo(Screen.Home) }
+                deckId = deckId.toLong(),
+                onBack = { navController.navigate("home") }
             )
         }
     }

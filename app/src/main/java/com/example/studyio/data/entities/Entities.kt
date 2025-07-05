@@ -8,9 +8,11 @@ import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.room.Update
 
 /**
  * Deck entity representing a collection of flashcards.
@@ -111,7 +113,9 @@ data class Card(
     val reps: Int = 0, // number of reviews
     val lapses: Int = 0, // number of lapses
     val createdAt: java.time.LocalDateTime = java.time.LocalDateTime.now(),
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val difficulty: Double = 5.0, // FSRS difficulty (1-10, default 5.0)
+    val stability: Double = 1.0 // FSRS stability (default 1.0)
 )
 
 /**
@@ -166,6 +170,12 @@ interface CardDao {
      */
     @Query("SELECT * FROM cards WHERE noteId = :noteId")
     suspend fun getCardsForNote(noteId: Long): List<Card>
+
+    /**
+     * Update a card's fields.
+     */
+    @Update
+    suspend fun updateCard(card: Card): Int
 }
 
 /**
@@ -190,4 +200,12 @@ abstract class StudyioDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
 }
 
-
+/**
+ * Build and provide the StudyioDatabase instance.
+ */
+fun buildStudyioDatabase(context: android.content.Context): StudyioDatabase =
+    Room.databaseBuilder(
+        context,
+        StudyioDatabase::class.java,
+        "studyio.db"
+    ).fallbackToDestructiveMigration(true).fallbackToDestructiveMigrationOnDowngrade(true).build()

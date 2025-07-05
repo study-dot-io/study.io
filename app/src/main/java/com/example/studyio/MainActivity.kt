@@ -20,8 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.room.Room
 import com.example.studyio.data.entities.StudyioDatabase
+import com.example.studyio.data.entities.buildStudyioDatabase
 import com.example.studyio.data.importAnkiApkgFromStream
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,7 +30,7 @@ import com.example.studyio.ui.AppState
 import com.example.studyio.ui.screens.CreateDeckScreen
 import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.screens.HomeScreen
-import com.example.studyio.ui.screens.CreateCardScreen
+import com.example.studyio.ui.screens.QuizScreen
 import com.example.studyio.ui.theme.StudyIOTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,13 +56,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun StudyIOApp() {
     val context = LocalContext.current
-    val db = remember {
-        Room.databaseBuilder(
-            context,
-            StudyioDatabase::class.java,
-            "studyio.db"
-        ).fallbackToDestructiveMigration(true).build()
-    }
+    val db = remember { buildStudyioDatabase(context) }
     val coroutineScope = rememberCoroutineScope()
     var decks by remember { mutableStateOf<List<com.example.studyio.data.entities.Deck>>(emptyList()) }
 
@@ -104,10 +98,16 @@ fun StudyIOApp() {
                     navController.navigate("decks/create")
                 },
                 onStudyNow = {
-                    // TODO: Navigate to study screen
+                    val firstDeckId = appState.decks.firstOrNull()?.id
+                    if (firstDeckId != null) {
+                        navController.navigate("quiz/decks/${firstDeckId}")
+                    }
                 },
                 onImportApkg = {
                     importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
+                },
+                onStudyNowForDeck = { deck ->
+                    navController.navigate("quiz/decks/${deck.id}")
                 }
             )
         }
@@ -133,6 +133,18 @@ fun StudyIOApp() {
                 onBack = { navController.navigate("home") }
             )
         }
+        composable("quiz/decks/{id}"){
+                backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString("id") ?: error("missing deck id")
+            QuizScreen(
+                deckId = deckId.toLong(),
+                db = db,
+                onQuizComplete = {
+                    navController.navigate("home")
+                }
+            )
+        }
+
     }
 }
 

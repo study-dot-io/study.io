@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.studyio.data.entities.Deck
-import java.time.LocalDateTime
 import androidx.core.graphics.toColorInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +36,8 @@ fun HomeScreen(
     onDeckClick: (Deck) -> Unit = {},
     onCreateDeck: () -> Unit = {},
     onStudyNow: () -> Unit = {},
-    onImportApkg: (() -> Unit)? = null
+    onImportApkg: (() -> Unit)? = null,
+    onStudyNowForDeck: (Deck) -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -101,7 +101,6 @@ fun HomeScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                // Study Now Card
                 StudyNowCard(
                     dueCards = dueCards,
                     todayReviews = todayReviews,
@@ -110,7 +109,6 @@ fun HomeScreen(
             }
 
             item {
-                // Quick Stats
                 QuickStatsCard(
                     totalDecks = totalDecks,
                     totalCards = totalCards
@@ -128,7 +126,8 @@ fun HomeScreen(
             items(decks) { deck ->
                 DeckCard(
                     deck = deck,
-                    onClick = { onDeckClick(deck) }
+                    onClick = { onDeckClick(deck) },
+                    onReview = { onStudyNowForDeck(deck) }
                 )
             }
 
@@ -278,12 +277,12 @@ fun StatItem(
 @Composable
 fun DeckCard(
     deck: Deck,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onReview: () -> Unit
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -302,12 +301,12 @@ fun DeckCard(
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color(deck.color.toColorInt()))
             )
-            
             Spacer(modifier = Modifier.width(16.dp))
-            
-            // Deck info
+            // Deck info (clickable for deck details)
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onClick() }
             ) {
                 Text(
                     text = deck.name,
@@ -323,26 +322,13 @@ fun DeckCard(
                     )
                 }
             }
-            // Study button (can be repurposed for navigation)
-            IconButton(onClick = onClick) {
+            IconButton(onClick = onReview) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "View Deck",
+                    contentDescription = "Review Deck",
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
     }
 }
-
-private fun formatLastStudied(lastStudied: LocalDateTime): String {
-    val now = LocalDateTime.now()
-    val diff = java.time.Duration.between(lastStudied, now)
-    
-    return when {
-        diff.toDays() > 0 -> "${diff.toDays()}d ago"
-        diff.toHours() > 0 -> "${diff.toHours()}h ago"
-        diff.toMinutes() > 0 -> "${diff.toMinutes()}m ago"
-        else -> "Just now"
-    }
-} 

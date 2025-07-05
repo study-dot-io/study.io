@@ -41,6 +41,8 @@ suspend fun importAnkiApkgFromStream(
             val id = deckObj.getLong("id")
             val name = deckObj.getString("name")
             val desc = if (deckObj.has("desc")) deckObj.getString("desc") else null
+
+            android.util.Log.i("StudyIO", "Importing deck: $name (ID: $id, Desc: $desc)")
             db.deckDao().insertDeck(
                 Deck(
                     id = id,

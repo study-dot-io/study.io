@@ -6,9 +6,19 @@ import androidx.compose.runtime.setValue
 import com.example.studyio.data.entities.Deck
 import java.time.LocalDateTime
 
+sealed class Screen {
+    object Home : Screen()
+    object CreateDeck : Screen()
+    data class DeckDetail(val deckId: Long) : Screen()
+    data class Quiz(val deckId: Long) : Screen()
+}
+
 data class AppState(
-    val decks: List<Deck> = emptyList(),
+    val currentScreen: Screen = Screen.Home,
+    val decks: List<Deck> = emptyList()
 ) {
+    fun navigateTo(screen: Screen): AppState = copy(currentScreen = screen)
+    
     fun addDeck(deck: Deck): AppState {
         val newDeck = deck.copy(id = (decks.maxOfOrNull { it.id } ?: 0) + 1)
         return copy(decks = decks + newDeck)

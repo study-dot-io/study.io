@@ -1,75 +1,66 @@
 package com.example.studyio.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import com.example.studyio.ui.components.renderClassList
+import androidx.navigation.NavController
+import com.example.studyio.ui.components.ClassList
 
 @Composable
 fun LoggedInScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
-        Text(
-            text = "Good Morning, Aditya 👋",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        // Top 30% Section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.3f)
         ) {
-            // My Classes Section
-            Card(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                elevation = CardDefaults.cardElevation(4.dp)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Good Morning, Aditya 👋",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { /* navController.navigate("courses") */ },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text(
-                        text = "My Classes",
+                        text = "Courses",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    renderClassList(navController)
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = "Go to Courses",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
-            }
 
-            // Add Class Section
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(IntrinsicSize.Min),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Class")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Add a class", style = MaterialTheme.typography.bodyMedium)
-                }
+                // Class list as circular scrollable bubbles
+                ClassList(navController)
             }
         }
+
+        // Rest of screen (placeholder for now)
+        Spacer(modifier = Modifier.weight(0.7f))
     }
 }

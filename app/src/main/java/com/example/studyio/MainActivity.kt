@@ -28,7 +28,9 @@ import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.screens.HomeScreen
 import com.example.studyio.ui.screens.QuizScreen
 import com.example.studyio.ui.theme.StudyIOTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     companion object {
         private const val TAG = "StudyIO-MainActivity"
@@ -38,7 +40,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Log build version at startup -- sanity check to make sure code change was applied (gradle clean -> gradle build)
-        Log.i(TAG, "StudyIO Starting - 3:05PM LAST CHANGED")
+        Log.i(TAG, "StudyIO Starting - 4PM LAST CHANGED")
 
         setContent {
             StudyIOTheme {

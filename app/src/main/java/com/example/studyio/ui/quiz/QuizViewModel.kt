@@ -29,7 +29,7 @@ class QuizViewModel @Inject constructor(
 
     fun loadQuiz(deckId: Long) {
         viewModelScope.launch {
-            val cards = quizRepository.getDueCards(deckId)
+            val cards = quizRepository.getDueCards(deckId, 200) // Limit the number of cards loaded
             _dueCards.value = cards
             val noteIds = cards.map { it.noteId }
             _notesById.value = quizRepository.getNotesByIds(noteIds)
@@ -70,4 +70,3 @@ class QuizViewModel @Inject constructor(
         }
     }
 }
-

@@ -10,6 +10,5 @@ class DeckRepository @Inject constructor(private val deckDao: DeckDao) {
     suspend fun getAllDecks(): List<Deck> = deckDao.getAllDecks()
     suspend fun insertDeck(deck: Deck): Long = deckDao.insertDeck(deck)
     suspend fun deleteDeck(deckId: Long) = deckDao.deleteDeck(deckId)
-    // Add more deck-related operations as needed
 }
 

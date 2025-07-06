@@ -88,7 +88,12 @@ fun StudyIONavHost() {
             val deckId = backStackEntry.arguments?.getString("deckId")?.toLongOrNull() ?: return@composable
             CardCreateScreen(
                 deckId = deckId,
-                onDeckSelected = { /* Optionally handle deck selection */ },
+                onDeckSelected = { newDeckId ->
+                    // We want to navigate back to the selected deck's detail screen
+                    navController.popBackStack("decks/${deckId}", inclusive = true)
+                    navController.navigate("decks/$newDeckId")
+                    navController.navigate("decks/$newDeckId/createCard")
+                },
                 onBackPressed = { navController.popBackStack() },
                 onCreatePressed = { navController.popBackStack() }
             )

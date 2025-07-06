@@ -22,6 +22,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -42,7 +43,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.data.entities.Deck
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,17 +65,13 @@ fun CardCreateScreen(
     val availableDecks by viewModel.availableDecks.collectAsState()
     var deck by remember { mutableStateOf<Deck?>(null) }
 
-    LaunchedEffect(deckId) {
+    // Update deck selection when deckId or availableDecks change
+    LaunchedEffect(deckId, availableDecks) {
         viewModel.loadDecks()
         deck = availableDecks.find { it.id == deckId }
     }
 
-    val coroutineScope = rememberCoroutineScope()
-    fun createCard() {
-        coroutineScope.launch {
-            // TODO: Move card/note creation logic into the ViewModel for best practice
-        }
-    }
+    rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -112,7 +108,7 @@ fun CardCreateScreen(
                 onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }
             ) {
                 TextField(
-                    value = deck?.name ?: "Loading",
+                    value = deck?.name ?: "Select Deck",
                     onValueChange = {}, // Read-only field
                     readOnly = true,
                     label = { Text("Select Deck") },
@@ -120,7 +116,7 @@ fun CardCreateScreen(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded)
                     },
                     modifier = Modifier
-                        .menuAnchor()
+                        .menuAnchor(MenuAnchorType.PrimaryEditable, enabled = true)
                         .fillMaxWidth(),
                     colors = ExposedDropdownMenuDefaults.textFieldColors()
                 )
@@ -129,11 +125,12 @@ fun CardCreateScreen(
                     expanded = isDropdownExpanded,
                     onDismissRequest = { isDropdownExpanded = false }
                 ) {
-                    availableDecks.forEach { deck ->
+                    availableDecks.forEach { d ->
                         DropdownMenuItem(
-                            text = { Text(deck.name) },
+                            text = { Text(d.name) },
                             onClick = {
-                                onDeckSelected(deck.id)
+                                deck = d
+                                onDeckSelected(d.id)
                                 isDropdownExpanded = false
                             }
                         )
@@ -229,8 +226,16 @@ fun CardCreateScreen(
             // Create Button
             Button(
                 onClick = {
-                    createCard()
-                    onCreatePressed()
+                    if (deck != null) {
+                        viewModel.createCard(
+                            deckId = deck!!.id,
+                            front = frontText,
+                            back = backText,
+                            tags = tags
+                        ) {
+                            onCreatePressed()
+                        }
+                    }
                 },
                 enabled = isFormValid,
                 modifier = Modifier

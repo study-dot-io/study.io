@@ -11,22 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.studyio.data.entities.StudyioDatabase
-import com.example.studyio.data.entities.buildStudyioDatabase
 import com.example.studyio.data.importAnkiApkgFromStream
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.studyio.ui.AppState
+import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.screens.CreateDeckScreen
 import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.screens.HomeScreen
@@ -37,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import android.util.Log
+import androidx.hilt.navigation.compose.hiltViewModel
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -48,7 +46,6 @@ class MainActivity : ComponentActivity() {
 
         // Log build version at startup
         Log.i(TAG, "StudyIO Starting - 3:05PM LAST CHANGED")
-        Log.i(TAG, "App launched successfully")
 
         setContent {
             StudyIOTheme {
@@ -65,152 +62,81 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun StudyIOApp() {
-    val context = LocalContext.current
-    val db = remember { buildStudyioDatabase(context) }
-    val coroutineScope = rememberCoroutineScope()
-    var decks by remember { mutableStateOf<List<com.example.studyio.data.entities.Deck>>(emptyList()) }
+    val navController = rememberNavController()
+    val homeViewModel: HomeViewModel = hiltViewModel()
+    val decks by homeViewModel.decks.collectAsState()
     var isImporting by remember { mutableStateOf(false) }
     var importMessage by remember { mutableStateOf("") }
 
-    // Load decks from the database
-    LaunchedEffect(Unit) {
-        coroutineScope.launch(Dispatchers.IO) {
-            Log.d("StudyIO-App", "Loading decks from database...")
-            decks = db.deckDao().getAllDecks()
-            Log.d("StudyIO-App", "Loaded ${decks.size} decks from database")
+    val context = LocalContext.current
+    val importApkgLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri: Uri? ->
+            if (uri != null) {
+                isImporting = true
+                importMessage = "Preparing import..."
+                importAnkiApkg(
+                    context = context,
+                    uri = uri,
+                    onProgress = { message ->
+                        importMessage = message
+                    },
+                    onComplete = { success, message ->
+                        isImporting = false
+                        if (success) {
+                            homeViewModel.loadDecks()
+                        }
+                        importMessage = ""
+                    }
+                )
+            }
         }
-    }
-
-    var appState by remember { mutableStateOf(AppState(decks = decks)) }
-    val navController = rememberNavController()
-
-    // Keep appState.decks in sync with DB
-    LaunchedEffect(decks) {
-        appState = appState.copy(decks = decks)
-    }
+    )
 
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
-            val importApkgLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.OpenDocument(),
-                onResult = { uri: Uri? ->
-                    if (uri != null) {
-                        Log.i("StudyIO-Import", "Starting import from URI: $uri")
-                        isImporting = true
-                        importMessage = "Preparing import..."
-                        importAnkiApkg(
-                            context = context,
-                            db = db,
-                            uri = uri,
-                            onProgress = { message ->
-                                importMessage = message
-                                Log.d("StudyIO-Import", "Progress: $message")
-                            },
-                            onComplete = { success, message ->
-                                isImporting = false
-                                if (success) {
-                                    Log.i("StudyIO-Import", "Import completed successfully: $message")
-                                    // Refresh decks after successful import
-                                    coroutineScope.launch(Dispatchers.IO) {
-                                        decks = db.deckDao().getAllDecks()
-                                        Log.d("StudyIO-Import", "Refreshed deck list, now have ${decks.size} decks")
-                                    }
-                                } else {
-                                    Log.e("StudyIO-Import", "Import failed: $message")
-                                }
-                                importMessage = ""
-                            }
-                        )
-                    } else {
-                        Log.w("StudyIO-Import", "Import cancelled - no URI selected")
-                    }
-                }
-            )
             HomeScreen(
-                decks = appState.decks,
-                dueCards = appState.dueCards,
-                todayReviews = appState.todayReviews,
-                totalCards = appState.totalCards,
-                totalDecks = appState.totalDecks,
+                decks = decks,
+                dueCards = 0, // TODO: wire up real values
+                todayReviews = 0,
+                totalCards = 0,
+                totalDecks = decks.size,
                 isImporting = isImporting,
                 importMessage = importMessage,
-                onDeckClick = { deck ->
-                    Log.d("StudyIO-Navigation", "Navigating to deck: ${deck.name} (ID: ${deck.id})")
-                    navController.navigate("decks/${deck.id}")
-                },
-                onCreateDeck = {
-                    Log.d("StudyIO-Navigation", "Navigating to create deck screen")
-                    navController.navigate("decks/create")
-                },
+                onDeckClick = { deck -> navController.navigate("decks/${deck.id}") },
+                onCreateDeck = { navController.navigate("decks/create") },
                 onStudyNow = {
-                    val firstDeckId = appState.decks.firstOrNull()?.id
-                    if (firstDeckId != null) {
-                        Log.d("StudyIO-Navigation", "Starting study session for deck ID: $firstDeckId")
-                        navController.navigate("quiz/decks/${firstDeckId}")
-                    } else {
-                        Log.w("StudyIO-Navigation", "No decks available for study session")
-                    }
+                    val firstDeckId = decks.firstOrNull()?.id
+                    if (firstDeckId != null) navController.navigate("quiz/decks/${firstDeckId}")
                 },
-                onImportApkg = {
-                    Log.d("StudyIO-Import", "Opening file picker for APKG import")
-                    importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
-                },
-                onStudyNowForDeck = { deck ->
-                    Log.d("StudyIO-Navigation", "Starting study session for specific deck: ${deck.name} (ID: ${deck.id})")
-                    navController.navigate("quiz/decks/${deck.id}")
-                },
-                onDeleteDeck = { deck ->
-                    coroutineScope.launch(Dispatchers.IO) {
-                        db.deckDao().deleteDeckById(deck.id)
-                        decks = db.deckDao().getAllDecks()
-                        Log.i("StudyIO-Deck", "Deleted deck: ${deck.name} (ID: ${deck.id})")
-                    }
-                }
+                onImportApkg = { importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
+                onStudyNowForDeck = { deck -> navController.navigate("quiz/decks/${deck.id}") },
+                onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) }
             )
         }
         composable("decks/create") {
             CreateDeckScreen(
-                onBackPressed = {
-                    Log.d("StudyIO-Navigation", "Navigating back from create deck screen")
-                    navController.navigate("home") // popBackStack could be used
-                },
+                onBackPressed = { navController.navigate("home") },
                 onDeckCreated = { newDeck ->
-                    Log.i("StudyIO-Deck", "Creating new deck: ${newDeck.name}")
-                    coroutineScope.launch(Dispatchers.IO) {
-                        db.deckDao().insertDeck(newDeck)
-                        decks = db.deckDao().getAllDecks()
-                        Log.i("StudyIO-Deck", "Deck created successfully, total decks: ${decks.size}")
-                    }
-                    navController.navigate("home")
+                    homeViewModel.createDeck(newDeck) { navController.navigate("home") }
                 }
             )
         }
-        composable("decks/{id}"){
-                backStackEntry ->
-            val deckId = backStackEntry.arguments?.getString("id") ?: error("missing deck id")
-            Log.d("StudyIO-Navigation", "Viewing deck details for ID: $deckId")
+        composable("decks/{id}") { backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
             DeckDetailScreen(
-                deckId = deckId.toLong(),
-                onBack = {
-                    Log.d("StudyIO-Navigation", "Navigating back from deck details")
-                    navController.navigate("home")
-                }
+                deckId = deckId,
+                onBack = { navController.navigate("home") }
             )
         }
-        composable("quiz/decks/{id}"){
-                backStackEntry ->
-            val deckId = backStackEntry.arguments?.getString("id") ?: error("missing deck id")
-            Log.d("StudyIO-Navigation", "Starting quiz for deck ID: $deckId")
+        composable("quiz/decks/{id}") { backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
             QuizScreen(
-                deckId = deckId.toLong(),
-                db = db,
-                onQuizComplete = {
-                    Log.d("StudyIO-Navigation", "Quiz completed, returning to home")
-                    navController.navigate("home")
-                }
+                deckId = deckId,
+                db = null, // TODO: refactor QuizScreen to use ViewModel/Repository
+                onQuizComplete = { navController.navigate("home") }
             )
         }
-
     }
 }
 
@@ -224,7 +150,6 @@ fun StudyIOAppPreview() {
 
 fun importAnkiApkg(
     context: Context,
-    db: StudyioDatabase,
     uri: Uri,
     onProgress: (String) -> Unit = {},
     onComplete: (Boolean, String) -> Unit = { _, _ -> }
@@ -232,11 +157,9 @@ fun importAnkiApkg(
     val appScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     appScope.launch {
         try {
-            Log.i("StudyIO-Import", "Starting APKG import from URI: $uri")
             onProgress("Opening file...")
 
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                Log.d("StudyIO-Import", "Input stream opened successfully")
                 onProgress("Reading APKG file...")
 
                 importAnkiApkgFromStream(
@@ -246,14 +169,11 @@ fun importAnkiApkg(
                     onProgress = onProgress
                 )
 
-                Log.i("StudyIO-Import", "APKG import completed successfully")
                 onComplete(true, "Import completed successfully!")
             } ?: run {
-                Log.e("StudyIO-Import", "Failed to open input stream for URI: $uri")
                 onComplete(false, "Failed to open selected file")
             }
         } catch (e: Exception) {
-            Log.e("StudyIO-Import", "Import failed with exception", e)
             onComplete(false, "Import failed: ${e.message}")
         }
     }

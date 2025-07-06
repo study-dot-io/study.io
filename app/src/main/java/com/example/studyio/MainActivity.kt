@@ -21,12 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.studyio.data.entities.StudyioDatabase
-import com.example.studyio.data.entities.buildStudyioDatabase
 import com.example.studyio.data.importAnkiApkgFromStream
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.studyio.ui.AppState
+import com.example.studyio.ui.screens.CardCreateScreen
 import com.example.studyio.ui.screens.CreateDeckScreen
 import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.screens.HomeScreen
@@ -37,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import android.util.Log
+import com.example.studyio.data.DatabaseProvider
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -66,7 +67,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun StudyIOApp() {
     val context = LocalContext.current
-    val db = remember { buildStudyioDatabase(context) }
+    val db = remember {
+        DatabaseProvider.getDatabase(context)
+    }
     val coroutineScope = rememberCoroutineScope()
     var decks by remember { mutableStateOf<List<com.example.studyio.data.entities.Deck>>(emptyList()) }
     var isImporting by remember { mutableStateOf(false) }
@@ -165,7 +168,7 @@ fun StudyIOApp() {
             CreateDeckScreen(
                 onBackPressed = {
                     Log.d("StudyIO-Navigation", "Navigating back from create deck screen")
-                    navController.navigate("home") // popBackStack could be used
+                    navController.popBackStack() // popBackStack could be used
                 },
                 onDeckCreated = { newDeck ->
                     Log.i("StudyIO-Deck", "Creating new deck: ${newDeck.name}")
@@ -174,7 +177,7 @@ fun StudyIOApp() {
                         decks = db.deckDao().getAllDecks()
                         Log.i("StudyIO-Deck", "Deck created successfully, total decks: ${decks.size}")
                     }
-                    navController.navigate("home")
+                    navController.popBackStack()
                 }
             )
         }
@@ -186,8 +189,9 @@ fun StudyIOApp() {
                 deckId = deckId.toLong(),
                 onBack = {
                     Log.d("StudyIO-Navigation", "Navigating back from deck details")
-                    navController.navigate("home")
-                }
+                    navController.popBackStack()
+                },
+                onCreateCardPressed = { navController.navigate("decks/${deckId}/cards/create") }
             )
         }
         composable("quiz/decks/{id}"){
@@ -199,7 +203,25 @@ fun StudyIOApp() {
                 db = db,
                 onQuizComplete = {
                     Log.d("StudyIO-Navigation", "Quiz completed, returning to home")
-                    navController.navigate("home")
+                    navController.popBackStack()
+                },
+            )
+        }
+        composable("decks/{deckId}/cards/create"){
+                backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString("deckId") ?: error("missing deck id")
+            CardCreateScreen(
+                deckId = deckId.toLong(),
+                onDeckSelected = { newDeckId ->
+                    navController.popBackStack("decks/${deckId}", inclusive = true)
+                    navController.navigate("decks/${newDeckId}")
+                    navController.navigate("decks/${newDeckId}/cards/create")
+                },
+                onBackPressed = {
+                    navController.popBackStack()
+                },
+                onCreatePressed = {
+                    navController.popBackStack()
                 }
             )
         }

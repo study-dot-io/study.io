@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp") version "2.0.21-1.0.27"
+    id("com.google.devtools.ksp") version "2.1.0-1.0.29"
     kotlin("plugin.serialization") version "2.0.21"
 }
 
@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.studyio"
-        minSdk = 26
+        minSdk = 27
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -57,32 +57,30 @@ dependencies {
     implementation(libs.androidx.material3)
     
     // Room dependencies
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.common.jvm)
-    ksp("androidx.room:room-compiler:2.6.1")
+    ksp(libs.androidx.room.compiler)
 
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("androidx.test:core:1.5.0")
-    testImplementation("org.robolectric:robolectric:4.12.2")
+    testImplementation(libs.junit)
+    testImplementation(libs.androidx.core)
+    testImplementation(libs.robolectric)
     
-    // Navigation
-    val nav_version = "2.9.1"
     // Jetpack Compose integration
-    implementation("androidx.navigation:navigation-compose:$nav_version")
+    implementation(libs.androidx.navigation.compose)
 
     // Views/Fragments integration
-    implementation("androidx.navigation:navigation-fragment:$nav_version")
-    implementation("androidx.navigation:navigation-ui:$nav_version")
+    implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.navigation.ui)
 
     // Feature module support for Fragments
-    implementation("androidx.navigation:navigation-dynamic-features-fragment:$nav_version")
+    implementation(libs.androidx.navigation.dynamic.features.fragment)
 
     // Testing Navigation
-    androidTestImplementation("androidx.navigation:navigation-testing:$nav_version")
+    androidTestImplementation(libs.androidx.navigation.testing)
 
     // Material Icons
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.material.icons.extended)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

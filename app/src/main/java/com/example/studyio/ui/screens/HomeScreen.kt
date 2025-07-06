@@ -22,8 +22,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.studyio.data.entities.Deck
-import java.time.LocalDateTime
 import androidx.core.graphics.toColorInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,106 +35,206 @@ fun HomeScreen(
     todayReviews: Int,
     totalCards: Int,
     totalDecks: Int,
+    isImporting: Boolean = false,
+    importMessage: String = "",
     onDeckClick: (Deck) -> Unit = {},
     onCreateDeck: () -> Unit = {},
     onStudyNow: () -> Unit = {},
-    onImportApkg: (() -> Unit)? = null
+    onImportApkg: (() -> Unit)? = null,
+    onStudyNowForDeck: (Deck) -> Unit = {}
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "StudyIO",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "StudyIO",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = { /* Settings */ }) {
+                            Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
-                },
-                actions = {
-                    IconButton(onClick = { /* Settings */ }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
                 )
-            )
-        },
-        floatingActionButton = {
-            var fabExpanded by remember { mutableStateOf(false) }
-            Box {
-                FloatingActionButton(
-                    onClick = { fabExpanded = !fabExpanded },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Actions")
+            },
+            floatingActionButton = {
+                var fabExpanded by remember { mutableStateOf(false) }
+                Box {
+                    FloatingActionButton(
+                        onClick = { fabExpanded = !fabExpanded },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Actions")
+                    }
+                    DropdownMenu(
+                        expanded = fabExpanded,
+                        onDismissRequest = { fabExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Create Deck") },
+                            onClick = {
+                                fabExpanded = false
+                                onCreateDeck()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Import Anki Deck (.apkg)") },
+                            onClick = {
+                                fabExpanded = false
+                                if (onImportApkg != null) onImportApkg()
+                            },
+                            enabled = !isImporting
+                        )
+                    }
                 }
-                DropdownMenu(
-                    expanded = fabExpanded,
-                    onDismissRequest = { fabExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Create Deck") },
-                        onClick = {
-                            fabExpanded = false
-                            onCreateDeck()
-                        }
+            }
+        ) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    StudyNowCard(
+                        dueCards = dueCards,
+                        todayReviews = todayReviews,
+                        onStudyNow = onStudyNow
                     )
-                    DropdownMenuItem(
-                        text = { Text("Import Anki Deck (.apkg)") },
-                        onClick = {
-                            fabExpanded = false
-                            if (onImportApkg != null) onImportApkg()
-                        }
+                }
+
+                item {
+                    QuickStatsCard(
+                        totalDecks = totalDecks,
+                        totalCards = totalCards
                     )
+                }
+
+                // Import status card
+                if (isImporting) {
+                    item {
+                        ImportStatusCard(
+                            message = importMessage
+                        )
+                    }
+                }
+
+                item {
+                    Text(
+                        text = "Your Decks",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                items(decks) { deck ->
+                    DeckCard(
+                        deck = deck,
+                        onClick = { onDeckClick(deck) },
+                        onReview = { onStudyNowForDeck(deck) }
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
                 }
             }
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+
+        // Loading overlay dialog
+        if (isImporting) {
+            Dialog(
+                onDismissRequest = { /* Prevent dismissal during import */ },
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false
+                )
+            ) {
+                ImportLoadingDialog(message = importMessage)
+            }
+        }
+    }
+}
+
+@Composable
+fun ImportLoadingDialog(message: String) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Study Now Card
-                StudyNowCard(
-                    dueCards = dueCards,
-                    todayReviews = todayReviews,
-                    onStudyNow = onStudyNow
-                )
-            }
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Importing Anki Deck",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
 
-            item {
-                // Quick Stats
-                QuickStatsCard(
-                    totalDecks = totalDecks,
-                    totalCards = totalCards
-                )
-            }
-
-            item {
+@Composable
+fun ImportStatusCard(message: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = MaterialTheme.colorScheme.tertiary,
+                strokeWidth = 2.dp
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
                 Text(
-                    text = "Your Decks",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
+                    text = "Importing...",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
-            }
-
-            items(decks) { deck ->
-                DeckCard(
-                    deck = deck,
-                    onClick = { onDeckClick(deck) }
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                 )
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
             }
         }
     }
@@ -172,7 +273,7 @@ fun StudyNowCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
                 }
-                
+
                 Button(
                     onClick = onStudyNow,
                     colors = ButtonDefaults.buttonColors(
@@ -186,9 +287,9 @@ fun StudyNowCard(
                     Text("Start")
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -278,12 +379,12 @@ fun StatItem(
 @Composable
 fun DeckCard(
     deck: Deck,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onReview: () -> Unit
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -302,12 +403,12 @@ fun DeckCard(
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color(deck.color.toColorInt()))
             )
-            
             Spacer(modifier = Modifier.width(16.dp))
-            
-            // Deck info
+            // Deck info (clickable for deck details)
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onClick() }
             ) {
                 Text(
                     text = deck.name,
@@ -323,26 +424,13 @@ fun DeckCard(
                     )
                 }
             }
-            // Study button (can be repurposed for navigation)
-            IconButton(onClick = onClick) {
+            IconButton(onClick = onReview) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "View Deck",
+                    contentDescription = "Review Deck",
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
     }
 }
-
-private fun formatLastStudied(lastStudied: LocalDateTime): String {
-    val now = LocalDateTime.now()
-    val diff = java.time.Duration.between(lastStudied, now)
-    
-    return when {
-        diff.toDays() > 0 -> "${diff.toDays()}d ago"
-        diff.toHours() > 0 -> "${diff.toHours()}h ago"
-        diff.toMinutes() > 0 -> "${diff.toMinutes()}m ago"
-        else -> "Just now"
-    }
-} 

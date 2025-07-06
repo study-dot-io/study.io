@@ -24,15 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 @Composable
 fun DeckDetailScreen(deckId: Long, onBack: () -> Unit) {
     val context = LocalContext.current
-    val db = remember {
-        StudyioDatabase::class.java.let {
-            androidx.room.Room.databaseBuilder(
-                context,
-                it,
-                "studyio.db"
-            ).fallbackToDestructiveMigration(true).build()
-        }
-    }
+    val db = remember { com.example.studyio.data.entities.buildStudyioDatabase(context) }
     val coroutineScope = rememberCoroutineScope()
     var notes by remember { mutableStateOf<List<Note>>(emptyList()) }
     var showDialog by remember { mutableStateOf(false) }

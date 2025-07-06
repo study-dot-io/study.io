@@ -19,18 +19,17 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.example.studyio.data.DatabaseProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeckDetailScreen(deckId: Long, onBack: () -> Unit) {
+fun DeckDetailScreen(deckId: Long, onBack: () -> Unit, onCreateCardPressed: () -> Unit) {
     val context = LocalContext.current
-    val db = remember { com.example.studyio.data.entities.buildStudyioDatabase(context) }
+    val db = remember {
+        DatabaseProvider.getDatabase(context)
+    }
     val coroutineScope = rememberCoroutineScope()
     var notes by remember { mutableStateOf<List<Note>>(emptyList()) }
-    var showDialog by remember { mutableStateOf(false) }
-    var field1 by remember { mutableStateOf("") }
-    var field2 by remember { mutableStateOf("") }
-    var tags by remember { mutableStateOf("") }
 
     LaunchedEffect(deckId) {
         coroutineScope.launch {
@@ -52,7 +51,7 @@ fun DeckDetailScreen(deckId: Long, onBack: () -> Unit) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showDialog = true }
+                onClick = onCreateCardPressed
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Card")
             }
@@ -73,85 +72,6 @@ fun DeckDetailScreen(deckId: Long, onBack: () -> Unit) {
             }
         }
 
-        // Show dialog for adding a new card; triggered by the FloatingActionButton
-        if (showDialog) {
-            AlertDialog(
-                onDismissRequest = { showDialog = false },
-                title = { Text("Add Card") },
-                text = {
-                    Column {
-                        OutlinedTextField(
-                            value = field1,
-                            onValueChange = { field1 = it },
-                            label = { Text("Front") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = field2,
-                            onValueChange = { field2 = it },
-                            label = { Text("Back") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = tags,
-                            onValueChange = { tags = it },
-                            label = { Text("Tags (space-separated)") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                },
-                confirmButton = {
-                    Button(onClick = {
-                        coroutineScope.launch {
-                            try {
-                                // Create the note first
-                                val newNote = Note.create(
-                                    modelId = 1L, // Basic card model
-                                    fields = listOf(field1.trim(), field2.trim()),
-                                    tags = tags.trim()
-                                )
-
-                                // Insert the note and get its ID
-                                val noteId = db.noteDao().insertNote(newNote)
-
-                                // Create a card from the note
-                                val newCard = Card(
-                                    deckId = deckId,
-                                    noteId = noteId,
-                                    ord = 0, // First template (front/back)
-                                    type = 0, // New card
-                                    queue = 0, // New card queue
-                                    due = 1 // New cards start with due=1
-                                )
-
-                                // Insert the card
-                                db.cardDao().insertCard(newCard)
-
-                                // Refresh the notes list
-                                notes = db.noteDao().getNotesForDeck(deckId)
-
-                                // Close dialog and clear fields
-                                showDialog = false
-                                field1 = ""
-                                field2 = ""
-                                tags = ""
-                            } catch (e: Exception) {
-                                println("Error creating card: ${e.message}")
-                            }
-                        }
-                    }) {
-                        Text("Add")
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = { showDialog = false }) {
-                        Text("Cancel")
-                    }
-                }
-            )
-        }
     }
 }
 

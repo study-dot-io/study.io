@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Log build version at startup
-        Log.i(TAG, "StudyIO Starting - 5:03PM LAST CHANGED")
+        Log.i(TAG, "StudyIO Starting - 3:05PM LAST CHANGED")
         Log.i(TAG, "App launched successfully")
 
         setContent {
@@ -158,6 +158,13 @@ fun StudyIOApp() {
                 onStudyNowForDeck = { deck ->
                     Log.d("StudyIO-Navigation", "Starting study session for specific deck: ${deck.name} (ID: ${deck.id})")
                     navController.navigate("quiz/decks/${deck.id}")
+                },
+                onDeleteDeck = { deck ->
+                    coroutineScope.launch(Dispatchers.IO) {
+                        db.deckDao().deleteDeckById(deck.id)
+                        decks = db.deckDao().getAllDecks()
+                        Log.i("StudyIO-Deck", "Deleted deck: ${deck.name} (ID: ${deck.id})")
+                    }
                 }
             )
         }

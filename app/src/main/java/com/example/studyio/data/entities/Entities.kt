@@ -146,6 +146,9 @@ interface DeckDao {
 
     @Insert
     suspend fun insertDeck(deck: Deck): Long
+
+    @Query("DELETE FROM decks WHERE id = :deckId")
+    suspend fun deleteDeckById(deckId: Long)
 }
 
 /**

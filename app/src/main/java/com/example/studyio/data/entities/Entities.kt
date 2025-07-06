@@ -1,13 +1,12 @@
 package com.example.studyio.data.entities
 
+import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Query
-import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
-import androidx.room.TypeConverters
 
 /**
  * Deck entity representing a collection of flashcards.

@@ -6,66 +6,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.studyio.FSRScheduler
-import com.example.studyio.data.entities.Card
-import com.example.studyio.data.entities.StudyioDatabase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.time.LocalDate
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.studyio.ui.quiz.QuizViewModel
 
 @Composable
 fun QuizScreen(
     deckId: Long,
-    db: StudyioDatabase,
     onQuizComplete: () -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    var dueCards by remember { mutableStateOf<List<Card>>(emptyList()) }
-    var currentIndex by remember { mutableIntStateOf(0) }
+    val viewModel: QuizViewModel = hiltViewModel()
+    val dueCards by viewModel.dueCards.collectAsState()
+    val notesById by viewModel.notesById.collectAsState()
+    val currentIndex by viewModel.currentIndex.collectAsState()
+    val isComplete by viewModel.isComplete.collectAsState()
     var showBack by remember { mutableStateOf(false) }
-    var isComplete by remember { mutableStateOf(false) }
-    var notesById by remember { mutableStateOf<Map<Long, com.example.studyio.data.entities.Note>>(emptyMap()) }
-    val today = LocalDate.now()
 
-    fun rateCard(
-        card: Card,
-        rating: Int,
-        today: LocalDate,
-        db: StudyioDatabase,
-        onNext: () -> Unit
-    ) {
-        coroutineScope.launch(Dispatchers.IO) {
-            val stability = card.stability
-            val difficulty = card.difficulty
-            val retrievability = FSRScheduler.forgettingCurve(card.interval.toDouble(), stability)
-            val newDifficulty = FSRScheduler.nextDifficulty(difficulty, rating)
-            val newStability = if (rating == 1) {
-                FSRScheduler.nextForgetStability(difficulty, stability, retrievability)
-            } else {
-                FSRScheduler.nextRecallStability(difficulty, stability, retrievability, rating)
-            }
-            val newInterval = FSRScheduler.nextIntervalFSRS(newStability)
-            db.cardDao().updateCard(
-                card.copy(
-                    interval = newInterval,
-                    due = today.plusDays(newInterval.toLong()).toEpochDay().toInt(),
-                    difficulty = newDifficulty,
-                    stability = newStability
-                )
-            )
-            onNext()
-        }
-    }
-
-    // Load due cards and notes for this deck
     LaunchedEffect(deckId) {
-        coroutineScope.launch(Dispatchers.IO) {
-            val allCards = db.cardDao().getCardsForDeck(deckId)
-            val due = FSRScheduler.getDueCards(allCards, today)
-            val notes = db.noteDao().getNotesForDeck(deckId)
-            notesById = notes.associateBy { it.id }
-            dueCards = due
-        }
+        viewModel.loadQuiz(deckId)
     }
 
     if (isComplete || dueCards.isEmpty()) {
@@ -80,7 +37,7 @@ fun QuizScreen(
 
     val card = dueCards.getOrNull(currentIndex)
     if (card == null) {
-        isComplete = true
+        // Defensive: should not happen
         return
     }
 
@@ -122,32 +79,20 @@ fun QuizScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 ReviewButton("Again", onClick = {
-                    rateCard(card, 1, today, db) {
-                        showBack = false
-                        currentIndex++
-                        if (currentIndex >= dueCards.size) isComplete = true
-                    }
+                    viewModel.rateCard(1)
+                    showBack = false
                 })
                 ReviewButton("Hard", onClick = {
-                    rateCard(card, 2, today, db) {
-                        showBack = false
-                        currentIndex++
-                        if (currentIndex >= dueCards.size) isComplete = true
-                    }
+                    viewModel.rateCard(2)
+                    showBack = false
                 })
                 ReviewButton("Good", onClick = {
-                    rateCard(card, 3, today, db) {
-                        showBack = false
-                        currentIndex++
-                        if (currentIndex >= dueCards.size) isComplete = true
-                    }
+                    viewModel.rateCard(3)
+                    showBack = false
                 })
                 ReviewButton("Easy", onClick = {
-                    rateCard(card, 4, today, db) {
-                        showBack = false
-                        currentIndex++
-                        if (currentIndex >= dueCards.size) isComplete = true
-                    }
+                    viewModel.rateCard(4)
+                    showBack = false
                 })
             }
         }

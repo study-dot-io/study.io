@@ -2,6 +2,7 @@ package com.example.studyio.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -41,8 +42,11 @@ fun HomeScreen(
     onCreateDeck: () -> Unit = {},
     onStudyNow: () -> Unit = {},
     onImportApkg: (() -> Unit)? = null,
-    onStudyNowForDeck: (Deck) -> Unit = {}
+    onStudyNowForDeck: (Deck) -> Unit = {},
+    onDeleteDeck: (Deck) -> Unit = {}
 ) {
+    var deckToDelete by remember { mutableStateOf<Deck?>(null) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
@@ -142,7 +146,8 @@ fun HomeScreen(
                     DeckCard(
                         deck = deck,
                         onClick = { onDeckClick(deck) },
-                        onReview = { onStudyNowForDeck(deck) }
+                        onReview = { onStudyNowForDeck(deck) },
+                        onLongPress = { deckToDelete = deck }
                     )
                 }
 
@@ -163,6 +168,28 @@ fun HomeScreen(
             ) {
                 ImportLoadingDialog(message = importMessage)
             }
+        }
+
+        // Delete deck confirmation dialog
+        deckToDelete?.let { deck ->
+            AlertDialog(
+                onDismissRequest = { deckToDelete = null },
+                title = { Text("Delete Deck") },
+                text = { Text("Are you sure you want to delete the deck '${deck.name}'?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        onDeleteDeck(deck)
+                        deckToDelete = null
+                    }) {
+                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deckToDelete = null }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
@@ -380,7 +407,8 @@ fun StatItem(
 fun DeckCard(
     deck: Deck,
     onClick: () -> Unit,
-    onReview: () -> Unit
+    onReview: () -> Unit,
+    onLongPress: () -> Unit // Replace onDelete with onLongPress
 ) {
     Card(
         modifier = Modifier
@@ -393,7 +421,11 @@ fun DeckCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongPress
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Color indicator
@@ -408,7 +440,7 @@ fun DeckCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { onClick() }
+                // clickable removed from here
             ) {
                 Text(
                     text = deck.name,
@@ -425,11 +457,7 @@ fun DeckCard(
                 }
             }
             IconButton(onClick = onReview) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Review Deck",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                Icon(Icons.Default.PlayArrow, contentDescription = "Review")
             }
         }
     }

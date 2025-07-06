@@ -36,7 +36,7 @@ class ExampleUnitTest {
         val testDeck =
             runBlocking { db.deckDao().getAllDecks() }.first { deck -> deck.name.contains("Most Common English Words") }
         val notes = runBlocking { db.noteDao().getNotesForDeck(testDeck.id) }
-        val cards = runBlocking { db.cardDao().getCardsForDeck(testDeck.id) }
+        val cards = runBlocking { db.cardDao().getCardsForDeck(testDeck.id, 200) }
         assertTrue(notes.isNotEmpty())
         assertTrue(cards.isNotEmpty())
     }

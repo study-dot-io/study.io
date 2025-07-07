@@ -25,7 +25,6 @@ fun StudyIONavHost() {
     val navController = rememberNavController()
     val homeViewModel: HomeViewModel = hiltViewModel()
     val importViewModel: ImportViewModel = hiltViewModel()
-    val decks by homeViewModel.decks.collectAsState()
     val isImporting by importViewModel.isImporting.collectAsState()
     val importMessage by importViewModel.importMessage.collectAsState()
 

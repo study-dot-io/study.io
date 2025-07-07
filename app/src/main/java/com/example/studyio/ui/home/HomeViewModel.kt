@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.DeckRepository
 import com.example.studyio.data.entities.Deck
+import com.example.studyio.events.QuizEvents
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,6 +23,11 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadDecks()
+        viewModelScope.launch {
+            QuizEvents.quizCompleted.collectLatest {
+                loadDecks()
+            }
+        }
     }
 
     fun loadDecks() {
@@ -53,4 +60,3 @@ class HomeViewModel @Inject constructor(
         }
     }
 }
-

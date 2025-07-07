@@ -40,7 +40,7 @@ interface CardDao {
     @Insert
     suspend fun insertCard(card: Card): Long
 
-    @Query("SELECT * FROM cards WHERE deckId = :deckId LIMIT :limit")
+    @Query("SELECT * FROM cards WHERE deckId = :deckId AND due <= strftime('%s', 'now') ORDER BY due ASC LIMIT :limit")
     suspend fun getCardsForDeck(deckId: Long, limit: Int): List<Card>
 
     @Query("SELECT * FROM cards WHERE noteId = :noteId")

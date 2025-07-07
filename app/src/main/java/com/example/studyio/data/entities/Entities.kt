@@ -1,12 +1,11 @@
 package com.example.studyio.data.entities
 
-import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import androidx.room.Query
 import androidx.room.TypeConverter
+import java.time.LocalDateTime
 
 /**
  * Deck entity representing a collection of flashcards.
@@ -106,7 +105,7 @@ data class Card(
     val interval: Int = 0, // SRS interval (days)
     val reps: Int = 0, // number of reviews
     val lapses: Int = 0, // number of lapses
-    val createdAt: java.time.LocalDateTime = java.time.LocalDateTime.now(),
+    val createdAt: LocalDateTime = LocalDateTime.now(),
     val isActive: Boolean = true,
     val difficulty: Double = 5.0, // FSRS difficulty (1-10, default 5.0)
     val stability: Double = 1.0 // FSRS stability (default 1.0)

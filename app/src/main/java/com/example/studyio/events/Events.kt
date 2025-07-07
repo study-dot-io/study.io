@@ -3,12 +3,12 @@ package com.example.studyio.events
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-object QuizEvents {
-    private val _quizCompleted = MutableSharedFlow<Unit>()
-    val quizCompleted = _quizCompleted.asSharedFlow()
+object Events {
+    private val _deckUpdated = MutableSharedFlow<Unit>()
+    val deckUpdated = _deckUpdated.asSharedFlow()
 
     suspend fun decksUpdated() {
-        _quizCompleted.emit(Unit)
+        _deckUpdated.emit(Unit)
     }
 }
 

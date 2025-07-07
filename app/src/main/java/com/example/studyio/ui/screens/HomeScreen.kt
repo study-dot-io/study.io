@@ -414,9 +414,9 @@ fun DeckCard(
 ) {
     val viewModel: HomeViewModel = hiltViewModel()
     
-    val deckCountMap by viewModel.deckCountMap.collectAsState()
+    val cardCountMap by viewModel.cardCountMap.collectAsState()
     // check keys in the deck count map
-    Log.d("DeckCard", "Deck Count Map: ${deckCountMap.keys.joinToString(", ")}")
+    Log.d("DeckCard", "Deck Count Map: ${cardCountMap.keys.joinToString(", ")}")
 
     Card(
         modifier = Modifier
@@ -448,7 +448,6 @@ fun DeckCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                // clickable removed from here
             ) {
                 Text(
                     text = deck.name,
@@ -464,12 +463,12 @@ fun DeckCard(
                     )
                 }
                 Text(
-                    text = "Due Cards: ${deckCountMap[deck.id] ?: 0}",
+                    text = "Due Cards: ${cardCountMap[deck.id] ?: 0}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                 )
             }
-            IconButton(onClick = onReview) {
+            IconButton(onClick = onReview, enabled = (cardCountMap[deck.id] ?: 0) > 0) {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Review")
             }
         }

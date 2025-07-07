@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.DeckRepository
 import com.example.studyio.data.entities.Deck
-import com.example.studyio.events.QuizEvents
+import com.example.studyio.events.Events
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,14 +17,14 @@ class HomeViewModel @Inject constructor(
     private val deckRepository: DeckRepository
 ) : ViewModel() {
     private val _decks = MutableStateFlow<List<Deck>>(emptyList())
-    private val _deckCountMap = MutableStateFlow<Map<Long, Int>>(emptyMap())
+    private val _cardCountMap = MutableStateFlow<Map<Long, Int>>(emptyMap())
     val decks: StateFlow<List<Deck>> = _decks
-    val deckCountMap: StateFlow<Map<Long, Int>> = _deckCountMap
+    val cardCountMap: StateFlow<Map<Long, Int>> = _cardCountMap
 
     init {
         loadDecks()
         viewModelScope.launch {
-            QuizEvents.quizCompleted.collectLatest {
+            Events.deckUpdated.collectLatest {
                 loadDecks()
             }
         }
@@ -33,14 +33,14 @@ class HomeViewModel @Inject constructor(
     fun loadDecks() {
         viewModelScope.launch {
             _decks.value = deckRepository.getAllDecks()
-            // Fetch card counts to enhance the deck information; TODO: make this more efficient
+            // Fetch card counts to enhance the deck information; TODO: make this more efficient if this becomes a bottleneck
             val deckCounts = mutableMapOf<Long, Int>()
             _decks.value.forEach { deck ->
                 val count = deckRepository.getDueCardsCount(deck.id)
                 deckCounts[deck.id] = count
             }
             
-            _deckCountMap.value = deckCounts
+            _cardCountMap.value = deckCounts
         }
     }
 

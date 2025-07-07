@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.QuizRepository
 import com.example.studyio.data.entities.Card
 import com.example.studyio.data.entities.Note
-import com.example.studyio.events.QuizEvents
+import com.example.studyio.events.Events
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +52,7 @@ class QuizViewModel @Inject constructor(
                 )
             )
             // Fire event after every card is answered
-            QuizEvents.decksUpdated()
+            Events.decksUpdated()
             val nextIndex = idx + 1
             if (nextIndex >= cards.size) {
                 _isComplete.value = true

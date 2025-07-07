@@ -6,7 +6,7 @@ import com.example.studyio.data.entities.Deck
 import com.example.studyio.data.entities.CardDao
 import com.example.studyio.data.entities.DeckDao
 import com.example.studyio.data.entities.NoteDao
-import com.example.studyio.events.QuizEvents
+import com.example.studyio.events.Events
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +46,7 @@ class CardCreateViewModel @Inject constructor(
                 due = 0
             )
             cardDao.insertCard(card)
-            QuizEvents.decksUpdated()
+            Events.decksUpdated()
             onDone()
         }
     }

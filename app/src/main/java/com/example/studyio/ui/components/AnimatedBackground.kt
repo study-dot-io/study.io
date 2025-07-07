@@ -22,7 +22,7 @@ fun AnimatedBackground() {
                 composition = bgComposition,
                 progress = bgProgress,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop // <- key part
+                contentScale = ContentScale.Crop
             )
         }
 

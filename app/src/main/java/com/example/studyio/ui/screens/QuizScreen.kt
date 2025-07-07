@@ -26,9 +26,14 @@ fun QuizScreen(
     }
 
     if (isComplete || dueCards.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Text("Quiz complete!", style = MaterialTheme.typography.headlineMedium)
-            Button(onClick = onQuizComplete, modifier = Modifier.padding(top = 24.dp)) {
+            Spacer(Modifier.height(32.dp))
+            Button(onClick = onQuizComplete) {
                 Text("Return Home")
             }
         }
@@ -75,9 +80,10 @@ fun QuizScreen(
             Spacer(Modifier.height(16.dp))
             Text("How did you do?", style = MaterialTheme.typography.bodyMedium)
             val intervals = viewModel.getNextIntervalsForCurrentCard()
-            Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 val labels = listOf("Again", "Hard", "Good", "Easy")
                 for (i in 0..3) {

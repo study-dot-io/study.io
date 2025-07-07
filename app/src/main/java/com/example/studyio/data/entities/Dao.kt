@@ -12,7 +12,7 @@ import androidx.room.Update
 interface NoteDao {
     @Query("SELECT * FROM notes WHERE id IN (SELECT noteId FROM cards WHERE deckId = :deckId)")
     suspend fun getNotesForDeck(deckId: Long): List<Note>
-    
+
     @Query("SELECT * FROM notes WHERE id in (:noteIds)")
     suspend fun getNotesByIds(noteIds: List<Long>): List<Note>
 
@@ -40,11 +40,17 @@ interface CardDao {
     @Query("SELECT * FROM cards WHERE deckId = :deckId LIMIT :limit")
     suspend fun getCardsForDeck(deckId: Long, limit: Int): List<Card>
 
-    @Query("SELECT * FROM cards WHERE noteId = :noteId")
-    suspend fun getCardsForNote(noteId: Long): List<Card>
-
     @Update
     suspend fun updateCard(card: Card): Int
+
+    @Query(
+        """
+        SELECT * FROM cards WHERE deckId = :deckId AND (
+            (type = 0) OR (type IN (1,2,3) AND due <= :todayEpoch)
+            ) LIMIT :limit
+        """
+    )
+    suspend fun getCardsDueToday(deckId: Long, todayEpoch: Int, limit: Int): List<Card>
 }
 
 

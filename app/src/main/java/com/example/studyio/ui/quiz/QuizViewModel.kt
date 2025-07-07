@@ -25,11 +25,11 @@ class QuizViewModel @Inject constructor(
     val currentIndex: StateFlow<Int> = _currentIndex
     private val _isComplete = MutableStateFlow(false)
     val isComplete: StateFlow<Boolean> = _isComplete
-    private val today = LocalDate.now()
 
     fun loadQuiz(deckId: Long) {
         viewModelScope.launch {
-            val cards = quizRepository.getDueCards(deckId, 200) // Limit the number of cards loaded
+            val todayEpoch = LocalDate.now().toEpochDay().toInt()
+            val cards = quizRepository.getCardsDueToday(deckId, todayEpoch, 200)
             _dueCards.value = cards
             val noteIds = cards.map { it.noteId }
             _notesById.value = quizRepository.getNotesByIds(noteIds)
@@ -67,6 +67,24 @@ class QuizViewModel @Inject constructor(
             } else {
                 _currentIndex.value = nextIndex
             }
+        }
+    }
+
+    fun getNextIntervalsForCurrentCard(): List<Int> {
+        val cards = _dueCards.value
+        val idx = _currentIndex.value
+        if (idx >= cards.size) return emptyList()
+        val card = cards[idx]
+        val stability = card.stability
+        val difficulty = card.difficulty
+        val retrievability = FSRScheduler.forgettingCurve(card.interval.toDouble(), stability)
+        return (1..4).map { rating ->
+            val newStability = if (rating == 1) {
+                FSRScheduler.nextForgetStability(difficulty, stability, retrievability)
+            } else {
+                FSRScheduler.nextRecallStability(difficulty, stability, retrievability, rating)
+            }
+            FSRScheduler.nextIntervalFSRS(newStability)
         }
     }
 }

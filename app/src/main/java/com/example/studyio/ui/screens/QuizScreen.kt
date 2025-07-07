@@ -74,26 +74,21 @@ fun QuizScreen(
         if (showBack) {
             Spacer(Modifier.height(16.dp))
             Text("How did you do?", style = MaterialTheme.typography.bodyMedium)
+            val intervals = viewModel.getNextIntervalsForCurrentCard()
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                ReviewButton("Again", onClick = {
-                    viewModel.rateCard(1)
-                    showBack = false
-                })
-                ReviewButton("Hard", onClick = {
-                    viewModel.rateCard(2)
-                    showBack = false
-                })
-                ReviewButton("Good", onClick = {
-                    viewModel.rateCard(3)
-                    showBack = false
-                })
-                ReviewButton("Easy", onClick = {
-                    viewModel.rateCard(4)
-                    showBack = false
-                })
+                val labels = listOf("Again", "Hard", "Good", "Easy")
+                for (i in 0..3) {
+                    val label = labels[i]
+                    val interval = intervals.getOrNull(i)
+                    val intervalText = if (interval != null) " ($interval days)" else ""
+                    ReviewButton(label + intervalText, onClick = {
+                        viewModel.rateCard(i + 1)
+                        showBack = false
+                    })
+                }
             }
         }
     }

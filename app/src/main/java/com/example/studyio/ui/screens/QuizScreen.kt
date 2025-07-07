@@ -19,6 +19,7 @@ fun QuizScreen(
     val notesById by viewModel.notesById.collectAsState()
     val currentIndex by viewModel.currentIndex.collectAsState()
     val isComplete by viewModel.isComplete.collectAsState()
+    val cramMode by viewModel.cramMode.collectAsState()
     var showBack by remember { mutableStateOf(false) }
 
     LaunchedEffect(deckId) {
@@ -51,6 +52,14 @@ fun QuizScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        if (cramMode) {
+            Text(
+                "Cram Mode: Reviewing all cards (none are due)",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
         Text("Card ${currentIndex + 1} of ${dueCards.size}", style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(16.dp))
         Card(

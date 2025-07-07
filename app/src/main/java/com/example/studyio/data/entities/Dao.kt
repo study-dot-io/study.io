@@ -51,6 +51,16 @@ interface CardDao {
         """
     )
     suspend fun getCardsDueToday(deckId: Long, todayEpoch: Int, limit: Int): List<Card>
+
+    @Query("""
+        SELECT COUNT(*) FROM cards WHERE deckId = :deckId AND (
+            (type = 0) OR (type IN (1,2,3) AND due <= :todayEpoch)
+        )
+    """)
+    suspend fun getDueCardCount(deckId: Long, todayEpoch: Int): Int
+
+    @Query("SELECT * FROM cards WHERE deckId = :deckId ORDER BY due ASC")
+    suspend fun getAllCardsOrderedByDue(deckId: Long): List<Card>
 }
 
 

@@ -17,4 +17,9 @@ class QuizRepository @Inject constructor(
     suspend fun updateCard(card: Card) = cardDao.updateCard(card)
     suspend fun getCardsDueToday(deckId: Long, todayEpoch: Int, limit: Int = 200): List<Card> =
         cardDao.getCardsDueToday(deckId, todayEpoch, limit)
+    suspend fun getDueCardCount(deckId: Long, todayEpoch: Int): Int =
+        cardDao.getDueCardCount(deckId, todayEpoch)
+
+    suspend fun getAllCardsOrderedByDue(deckId: Long): List<Card> =
+        cardDao.getAllCardsOrderedByDue(deckId)
 }

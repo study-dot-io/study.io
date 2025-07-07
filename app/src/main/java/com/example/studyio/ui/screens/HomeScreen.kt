@@ -1,7 +1,6 @@
 package com.example.studyio.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,41 +10,40 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.studyio.data.entities.Deck
 import androidx.core.graphics.toColorInt
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    decks: List<Deck>,
-    dueCards: Int,
-    todayReviews: Int,
-    totalCards: Int,
-    totalDecks: Int,
     isImporting: Boolean = false,
     importMessage: String = "",
     onDeckClick: (Deck) -> Unit = {},
     onCreateDeck: () -> Unit = {},
-    onStudyNow: () -> Unit = {},
     onImportApkg: (() -> Unit)? = null,
     onStudyNowForDeck: (Deck) -> Unit = {},
     onDeleteDeck: (Deck) -> Unit = {}
 ) {
+    val viewModel: HomeScreenViewModel = hiltViewModel()
+    val decksWithDueCount by viewModel.decksWithDueCount.collectAsState()
     var deckToDelete by remember { mutableStateOf<Deck?>(null) }
+
+    LaunchedEffect(Unit) {
+        // This effect will run when the HomeScreen is recomposed after navigation
+        // This is needed so that after navigating back to the HomeScreen from quiz completion, state is updated
+        viewModel.loadDecksWithDueCount()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -111,30 +109,6 @@ fun HomeScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    StudyNowCard(
-                        dueCards = dueCards,
-                        todayReviews = todayReviews,
-                        onStudyNow = onStudyNow
-                    )
-                }
-
-                item {
-                    QuickStatsCard(
-                        totalDecks = totalDecks,
-                        totalCards = totalCards
-                    )
-                }
-
-                // Import status card
-                if (isImporting) {
-                    item {
-                        ImportStatusCard(
-                            message = importMessage
-                        )
-                    }
-                }
-
-                item {
                     Text(
                         text = "Your Decks",
                         style = MaterialTheme.typography.titleLarge,
@@ -142,12 +116,13 @@ fun HomeScreen(
                     )
                 }
 
-                items(decks) { deck ->
+                items(decksWithDueCount) { deckWithDue ->
                     DeckCard(
-                        deck = deck,
-                        onClick = { onDeckClick(deck) },
-                        onReview = { onStudyNowForDeck(deck) },
-                        onLongPress = { deckToDelete = deck }
+                        deck = deckWithDue.deck,
+                        dueCount = deckWithDue.dueCount,
+                        onClick = { onDeckClick(deckWithDue.deck) },
+                        onReview = { onStudyNowForDeck(deckWithDue.deck) },
+                        onLongPress = { deckToDelete = deckWithDue.deck }
                     )
                 }
 
@@ -230,185 +205,12 @@ fun ImportLoadingDialog(message: String) {
 }
 
 @Composable
-fun ImportStatusCard(message: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                color = MaterialTheme.colorScheme.tertiary,
-                strokeWidth = 2.dp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = "Importing...",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun StudyNowCard(
-    dueCards: Int,
-    todayReviews: Int,
-    onStudyNow: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Study Now",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "$dueCards cards due",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
-                }
-
-                Button(
-                    onClick = onStudyNow,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Start")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                StatItem(
-                    icon = Icons.Default.AccessTime,
-                    value = todayReviews.toString(),
-                    label = "Today's Reviews"
-                )
-                StatItem(
-                    icon = Icons.Default.Star,
-                    value = "85%",
-                    label = "Success Rate"
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun QuickStatsCard(
-    totalDecks: Int,
-    totalCards: Int
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            StatItem(
-                icon = Icons.Default.Folder,
-                value = totalDecks.toString(),
-                label = "Decks"
-            )
-            StatItem(
-                icon = Icons.Default.Star,
-                value = totalCards.toString(),
-                label = "Total Cards"
-            )
-            StatItem(
-                icon = Icons.Default.AccessTime,
-                value = "12h",
-                label = "Study Time"
-            )
-        }
-    }
-}
-
-@Composable
-fun StatItem(
-    icon: ImageVector,
-    value: String,
-    label: String
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
-    }
-}
-
-@Composable
 fun DeckCard(
     deck: Deck,
+    dueCount: Int,
     onClick: () -> Unit,
     onReview: () -> Unit,
-    onLongPress: () -> Unit // Replace onDelete with onLongPress
+    onLongPress: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -455,6 +257,12 @@ fun DeckCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                // Due count text
+                Text(
+                    text = "$dueCount cards due",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
             }
             IconButton(onClick = onReview) {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Review")

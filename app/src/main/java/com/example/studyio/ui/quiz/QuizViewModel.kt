@@ -25,16 +25,25 @@ class QuizViewModel @Inject constructor(
     val currentIndex: StateFlow<Int> = _currentIndex
     private val _isComplete = MutableStateFlow(false)
     val isComplete: StateFlow<Boolean> = _isComplete
+    private val _cramMode = MutableStateFlow(false)
+    val cramMode: StateFlow<Boolean> = _cramMode
 
     fun loadQuiz(deckId: Long) {
         viewModelScope.launch {
             val todayEpoch = LocalDate.now().toEpochDay().toInt()
             val cards = quizRepository.getCardsDueToday(deckId, todayEpoch, 200)
-            _dueCards.value = cards
-            val noteIds = cards.map { it.noteId }
+            if (cards.isNotEmpty()) {
+                _dueCards.value = cards
+                _cramMode.value = false
+            } else {
+                val allCards = quizRepository.getAllCardsOrderedByDue(deckId)
+                _dueCards.value = allCards
+                _cramMode.value = true
+            }
+            val noteIds = _dueCards.value.map { it.noteId }
             _notesById.value = quizRepository.getNotesByIds(noteIds)
             _currentIndex.value = 0
-            _isComplete.value = cards.isEmpty()
+            _isComplete.value = _dueCards.value.isEmpty()
         }
     }
 

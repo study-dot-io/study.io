@@ -48,19 +48,10 @@ fun StudyIONavHost() {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
-                decks = decks,
-                dueCards = 0, // TODO: wire up real values
-                todayReviews = 0,
-                totalCards = 0,
-                totalDecks = decks.size,
                 isImporting = isImporting,
                 importMessage = importMessage,
                 onDeckClick = { deck -> navController.navigate("decks/${deck.id}") },
                 onCreateDeck = { navController.navigate("decks/create") },
-                onStudyNow = {
-                    val firstDeckId = decks.firstOrNull()?.id
-                    if (firstDeckId != null) navController.navigate("quiz/decks/${firstDeckId}")
-                },
                 onImportApkg = { importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
                 onStudyNowForDeck = { deck -> navController.navigate("quiz/decks/${deck.id}") },
                 onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) }

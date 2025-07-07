@@ -116,8 +116,8 @@ data class Card(
  */
 class Converters {
     @TypeConverter
-    fun fromLocalDateTime(value: java.time.LocalDateTime?): String? = value?.toString()
+    fun fromLocalDateTime(value: LocalDateTime?): String? = value?.toString()
 
     @TypeConverter
-    fun toLocalDateTime(value: String?): java.time.LocalDateTime? = value?.let { java.time.LocalDateTime.parse(it) }
+    fun toLocalDateTime(value: String?): LocalDateTime? = value?.let { LocalDateTime.parse(it) }
 }

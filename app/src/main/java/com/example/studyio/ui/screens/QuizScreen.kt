@@ -82,20 +82,21 @@ fun QuizScreen(
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                ReviewButton("Again", onClick = {
+                ReviewButton("Again (1 day)", onClick = {
                     viewModel.rateCard(1)
                     showBack = false
                 })
-                ReviewButton("Hard", onClick = {
+                ReviewButton("Hard (2 days)", onClick = {
                     viewModel.rateCard(2)
                     showBack = false
                 })
-                ReviewButton("Good", onClick = {
+                ReviewButton("Good (3 days)", onClick = {
                     viewModel.rateCard(3)
                     showBack = false
                 })
-                ReviewButton("Easy", onClick = {
+                ReviewButton("Easy (4 days)", onClick = {
                     viewModel.rateCard(4)
                     showBack = false
                 })

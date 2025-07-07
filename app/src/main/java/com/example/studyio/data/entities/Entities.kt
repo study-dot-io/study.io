@@ -102,7 +102,7 @@ data class Card(
     val ord: Int, // template ordinal
     val type: Int, // 0=new, 1=learning, 2=review, 3=relearning
     val queue: Int, // scheduling state
-    val due: Int, // due info
+    val due: Int, // unix timestamp in seconds representing due date
     val interval: Int = 0, // SRS interval (days)
     val reps: Int = 0, // number of reviews
     val lapses: Int = 0, // number of lapses

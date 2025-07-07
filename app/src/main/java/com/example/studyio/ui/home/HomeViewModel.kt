@@ -15,7 +15,9 @@ class HomeViewModel @Inject constructor(
     private val deckRepository: DeckRepository
 ) : ViewModel() {
     private val _decks = MutableStateFlow<List<Deck>>(emptyList())
+    private val _deckCountMap = MutableStateFlow<Map<Long, Int>>(emptyMap())
     val decks: StateFlow<List<Deck>> = _decks
+    val deckCountMap: StateFlow<Map<Long, Int>> = _deckCountMap
 
     init {
         loadDecks()
@@ -24,6 +26,14 @@ class HomeViewModel @Inject constructor(
     fun loadDecks() {
         viewModelScope.launch {
             _decks.value = deckRepository.getAllDecks()
+            // Fetch card counts to enhance the deck information; TODO: make this more efficient
+            val deckCounts = mutableMapOf<Long, Int>()
+            _decks.value.forEach { deck ->
+                val count = deckRepository.getDueCardsCount(deck.id)
+                deckCounts[deck.id] = count
+            }
+            
+            _deckCountMap.value = deckCounts
         }
     }
 

@@ -30,6 +30,9 @@ interface DeckDao {
 
     @Query("DELETE FROM decks WHERE id = :deckId")
     suspend fun deleteDeck(deckId: Long)
+    
+    @Query("SELECT COUNT(*) FROM cards WHERE deckId = :deckId AND due <= strftime('%s', 'now')")
+    suspend fun getDueCardsCount(deckId: Long): Int
 }
 
 @Dao

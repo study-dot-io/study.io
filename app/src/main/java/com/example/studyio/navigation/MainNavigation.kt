@@ -13,10 +13,10 @@ fun MainNavigation() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "home") {
-        composable("home") { HomeScreen(navController) }   // Landing page
+        composable("home") { HomeScreen(navController) }   //Landing page
         composable("login") { Login() }
         composable("signup") { SignUp() }
-        composable("loggedin") { LoggedInScreen() }        // Full app with bottom nav
+        composable("loggedin") { LoggedInScreen() }        //Full app with bottom nav
 
         composable("selectedClassScreen/{classId}") { backStackEntry ->
             val classId = backStackEntry.arguments?.getString("classId") ?: ""

@@ -25,7 +25,6 @@ fun HomeScreen(navController: NavController) {
         // Animated background as bottom layer
         AnimatedBackground()
 
-        // Foreground content
         Column(
             modifier = Modifier
                 .fillMaxSize()

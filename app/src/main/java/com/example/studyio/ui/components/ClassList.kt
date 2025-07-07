@@ -65,17 +65,13 @@ fun ClassList(navController: NavController) {
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-        Icon(
-            imageVector = Icons.Default.ArrowForward,
-            contentDescription = "Go to Courses",
-            tint = MaterialTheme.colorScheme.primary
-        )
+        Icon(Icons.Default.ArrowForward, contentDescription = null)
     }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp) // height for buttons + scrollbar
+            .height(100.dp)
             .onSizeChanged { containerWidthPx = it.width }
     ) {
         Row(
@@ -123,7 +119,7 @@ fun ClassList(navController: NavController) {
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .padding(horizontal = scrollbarPadding)
-                    .graphicsLayer(alpha = scrollbarAlpha) // fade scrollbar in/out
+                    .graphicsLayer(alpha = scrollbarAlpha)
             ) {
                 Box(
                     modifier = Modifier

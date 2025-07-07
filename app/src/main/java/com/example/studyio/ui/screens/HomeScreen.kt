@@ -1,7 +1,7 @@
 package com.example.studyio.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +27,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.studyio.data.entities.Deck
 import androidx.core.graphics.toColorInt
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.studyio.ui.home.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -410,6 +412,12 @@ fun DeckCard(
     onReview: () -> Unit,
     onLongPress: () -> Unit // Replace onDelete with onLongPress
 ) {
+    val viewModel: HomeViewModel = hiltViewModel()
+    
+    val cardCountMap by viewModel.cardCountMap.collectAsState()
+    // check keys in the deck count map
+    Log.d("DeckCard", "Deck Count Map: ${cardCountMap.keys.joinToString(", ")}")
+
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -440,7 +448,6 @@ fun DeckCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                // clickable removed from here
             ) {
                 Text(
                     text = deck.name,
@@ -455,8 +462,13 @@ fun DeckCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                Text(
+                    text = "Due Cards: ${cardCountMap[deck.id] ?: 0}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
             }
-            IconButton(onClick = onReview) {
+            IconButton(onClick = onReview, enabled = (cardCountMap[deck.id] ?: 0) > 0) {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Review")
             }
         }

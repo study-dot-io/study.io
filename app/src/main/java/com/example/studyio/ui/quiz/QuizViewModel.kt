@@ -2,15 +2,16 @@ package com.example.studyio.ui.quiz
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.studyio.FSRScheduler
 import com.example.studyio.data.QuizRepository
 import com.example.studyio.data.entities.Card
 import com.example.studyio.data.entities.Note
+import com.example.studyio.events.Events
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,7 +26,8 @@ class QuizViewModel @Inject constructor(
     val currentIndex: StateFlow<Int> = _currentIndex
     private val _isComplete = MutableStateFlow(false)
     val isComplete: StateFlow<Boolean> = _isComplete
-    private val today = LocalDate.now()
+    private val _quizCompletedEvent = MutableSharedFlow<Unit>()
+    val quizCompletedEvent: SharedFlow<Unit> = _quizCompletedEvent
 
     fun loadQuiz(deckId: Long) {
         viewModelScope.launch {
@@ -44,23 +46,13 @@ class QuizViewModel @Inject constructor(
         if (idx >= cards.size) return
         val card = cards[idx]
         viewModelScope.launch {
-            val stability = card.stability
-            val difficulty = card.difficulty
-            val retrievability = FSRScheduler.forgettingCurve(card.interval.toDouble(), stability)
-            val newDifficulty = FSRScheduler.nextDifficulty(difficulty, rating)
-            val newStability = if (rating == 1) {
-                FSRScheduler.nextForgetStability(difficulty, stability, retrievability)
-            } else {
-                FSRScheduler.nextRecallStability(difficulty, stability, retrievability, rating)
-            }
-            val newInterval = FSRScheduler.nextIntervalFSRS(newStability)
             quizRepository.updateCard(
                 card.copy(
-                    interval = newInterval,
-                    difficulty = newDifficulty,
-                    stability = newStability
+                    due = (System.currentTimeMillis() / 1000).toInt() + (rating * 24 * 60 * 60)
                 )
             )
+            // Fire event after every card is answered
+            Events.decksUpdated()
             val nextIndex = idx + 1
             if (nextIndex >= cards.size) {
                 _isComplete.value = true

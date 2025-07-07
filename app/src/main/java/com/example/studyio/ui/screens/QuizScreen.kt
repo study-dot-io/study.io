@@ -27,9 +27,14 @@ fun QuizScreen(
 
     if (isComplete || dueCards.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Quiz complete!", style = MaterialTheme.typography.headlineMedium)
-            Button(onClick = onQuizComplete, modifier = Modifier.padding(top = 24.dp)) {
-                Text("Return Home")
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Quiz complete!", style = MaterialTheme.typography.headlineMedium)
+                Button(onClick = onQuizComplete, modifier = Modifier.padding(top = 24.dp)) {
+                    Text("Return Home")
+                }
             }
         }
         return
@@ -74,23 +79,24 @@ fun QuizScreen(
         if (showBack) {
             Spacer(Modifier.height(16.dp))
             Text("How did you do?", style = MaterialTheme.typography.bodyMedium)
-            Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                ReviewButton("Again", onClick = {
+                ReviewButton("Again (1 day)", onClick = {
                     viewModel.rateCard(1)
                     showBack = false
                 })
-                ReviewButton("Hard", onClick = {
+                ReviewButton("Hard (2 days)", onClick = {
                     viewModel.rateCard(2)
                     showBack = false
                 })
-                ReviewButton("Good", onClick = {
+                ReviewButton("Good (3 days)", onClick = {
                     viewModel.rateCard(3)
                     showBack = false
                 })
-                ReviewButton("Easy", onClick = {
+                ReviewButton("Easy (4 days)", onClick = {
                     viewModel.rateCard(4)
                     showBack = false
                 })

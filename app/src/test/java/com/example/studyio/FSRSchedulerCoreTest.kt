@@ -56,9 +56,9 @@ class FSRSchedulerCoreTest {
 
     @Test
     fun testIsNewLearningReview() {
-        val cardNew = com.example.studyio.data.entities.Card(id=1, deckId=1, noteId=1, ord=0, type=0, queue=0, due=0)
-        val cardLearning = com.example.studyio.data.entities.Card(id=2, deckId=1, noteId=1, ord=0, type=1, queue=1, due=0)
-        val cardReview = com.example.studyio.data.entities.Card(id=3, deckId=1, noteId=1, ord=0, type=2, queue=2, due=0)
+        val cardNew = com.example.studyio.data.entities.Card(id =1, deckId =1, noteId =1, ord =0, type =0, queue =0, due =0)
+        val cardLearning = com.example.studyio.data.entities.Card(id =2, deckId =1, noteId =1, ord =0, type =1, queue =1, due =0)
+        val cardReview = com.example.studyio.data.entities.Card(id =3, deckId =1, noteId =1, ord =0, type =2, queue =2, due =0)
         assertTrue(FSRScheduler.isNew(cardNew))
         assertTrue(FSRScheduler.isLearning(cardLearning))
         assertTrue(FSRScheduler.isReview(cardReview))

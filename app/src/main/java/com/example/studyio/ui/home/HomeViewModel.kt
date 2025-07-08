@@ -2,8 +2,8 @@ package com.example.studyio.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.studyio.data.DeckRepository
 import com.example.studyio.data.entities.Deck
+import com.example.studyio.data.entities.DeckRepository
 import com.example.studyio.events.Events
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,9 +17,9 @@ class HomeViewModel @Inject constructor(
     private val deckRepository: DeckRepository
 ) : ViewModel() {
     private val _decks = MutableStateFlow<List<Deck>>(emptyList())
-    private val _cardCountMap = MutableStateFlow<Map<Long, Int>>(emptyMap())
+    private val _cardCountMap = MutableStateFlow<Map<String, Int>>(emptyMap())
     val decks: StateFlow<List<Deck>> = _decks
-    val cardCountMap: StateFlow<Map<Long, Int>> = _cardCountMap
+    val cardCountMap: StateFlow<Map<String, Int>> = _cardCountMap
 
     init {
         loadDecks()
@@ -34,7 +34,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _decks.value = deckRepository.getAllDecks()
             // Fetch card counts to enhance the deck information; TODO: make this more efficient if this becomes a bottleneck
-            val deckCounts = mutableMapOf<Long, Int>()
+            val deckCounts = mutableMapOf<String, Int>()
             _decks.value.forEach { deck ->
                 val count = deckRepository.getDueCardsCount(deck.id)
                 deckCounts[deck.id] = count
@@ -52,7 +52,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun deleteDeck(deckId: Long, onComplete: (() -> Unit)? = null) {
+    fun deleteDeck(deckId: String, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
             deckRepository.deleteDeck(deckId)
             loadDecks()

@@ -5,7 +5,6 @@ import androidx.room.Room
 import com.example.studyio.data.entities.StudyioDatabase
 import com.example.studyio.data.entities.DeckDao
 import com.example.studyio.data.entities.CardDao
-import com.example.studyio.data.entities.NoteDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,7 +28,4 @@ object DatabaseModule {
 
     @Provides
     fun provideCardDao(database: StudyioDatabase): CardDao = database.cardDao()
-
-    @Provides
-    fun provideNoteDao(database: StudyioDatabase): NoteDao = database.noteDao()
 }

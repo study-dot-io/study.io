@@ -11,12 +11,11 @@ import com.example.studyio.ui.quiz.QuizViewModel
 
 @Composable
 fun QuizScreen(
-    deckId: Long,
+    deckId: String,
     onQuizComplete: () -> Unit
 ) {
     val viewModel: QuizViewModel = hiltViewModel()
     val dueCards by viewModel.dueCards.collectAsState()
-    val notesById by viewModel.notesById.collectAsState()
     val currentIndex by viewModel.currentIndex.collectAsState()
     val isComplete by viewModel.isComplete.collectAsState()
     var showBack by remember { mutableStateOf(false) }
@@ -62,10 +61,8 @@ fun QuizScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("Front:", style = MaterialTheme.typography.labelMedium)
-                val note = notesById[card.noteId]
-                val fields = note?.fields?.split('\u001F') ?: emptyList()
-                val front = fields.getOrNull(0) ?: "(No front)"
-                val back = fields.getOrNull(1) ?: "(No back)"
+                val front = card.front
+                val back = card.back
                 Text(front, style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(16.dp))
                 if (showBack) {

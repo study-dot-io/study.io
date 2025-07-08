@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -30,16 +29,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.studyio.data.entities.Note
+import com.example.studyio.data.entities.Card
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeckDetailScreen(deckId: Long, onBack: () -> Unit, onCreateCardPressed: () -> Unit) {
+fun DeckDetailScreen(deckId: String, onBack: () -> Unit, onCreateCardPressed: () -> Unit) {
     val viewModel: DeckDetailViewModel = hiltViewModel()
-    val notes by viewModel.notes.collectAsState()
+    val cards by viewModel.cards.collectAsState()
 
     LaunchedEffect(deckId) {
-        viewModel.loadNotes(deckId)
+        viewModel.loadCards(deckId)
     }
 
     // Use Scaffold for proper screen structure and dialog overlay
@@ -70,10 +69,10 @@ fun DeckDetailScreen(deckId: Long, onBack: () -> Unit, onCreateCardPressed: () -
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            if (notes.isEmpty()) {
+            if (cards.isEmpty()) {
                 Text("No cards in this deck.", style = MaterialTheme.typography.bodyLarge)
             } else {
-                NotesGrid(notes = notes)
+                CardGrid(cards = cards)
             }
         }
 
@@ -81,12 +80,13 @@ fun DeckDetailScreen(deckId: Long, onBack: () -> Unit, onCreateCardPressed: () -
 }
 
 @Composable
-fun NotesGrid(notes: List<Note>) {
+fun CardGrid(cards: List<Card>) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(160.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        items(notes) { note ->
+        items(cards.size) { index ->
+            val card = cards[index]
             Card(
                 modifier = Modifier
                     .padding(8.dp)
@@ -96,18 +96,10 @@ fun NotesGrid(notes: List<Note>) {
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    val fields = note.fields.split("\u001F")
-                    if (fields.size >= 2) {
-                        Text("Front: ${fields[0]}", style = MaterialTheme.typography.bodyMedium)
-                        Text("Back: ${fields[1]}", style = MaterialTheme.typography.bodyMedium)
-                    } else {
-                        // Fallback for malformed fields
-                        note.fields.split("\u001F").forEachIndexed { idx, field ->
-                            Text("Field $idx: $field", style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                    if (note.tags.isNotBlank()) {
-                        Text("Tags: ${note.tags}", style = MaterialTheme.typography.bodySmall)
+                    Text("Front: ${card.front}", style = MaterialTheme.typography.bodyMedium)
+                    Text("Back: ${card.back}", style = MaterialTheme.typography.bodyMedium)
+                    if (card.tags.isNotBlank()) {
+                        Text("Tags: ${card.tags}", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }

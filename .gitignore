@@ -14,3 +14,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Database schemas
+app/schemas/

@@ -77,7 +77,7 @@ fun StudyIONavHost() {
             )
         }
         composable("decks/{id}") { backStackEntry ->
-            val deckId = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
+            val deckId = backStackEntry.arguments?.getString("id") ?: return@composable
             DeckDetailScreen(
                 deckId = deckId,
                 onBack = { navController.popBackStack() },
@@ -85,7 +85,7 @@ fun StudyIONavHost() {
             )
         }
         composable("decks/{deckId}/createCard") { backStackEntry ->
-            val deckId = backStackEntry.arguments?.getString("deckId")?.toLongOrNull() ?: return@composable
+            val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
             CardCreateScreen(
                 deckId = deckId,
                 onDeckSelected = { newDeckId ->
@@ -99,7 +99,7 @@ fun StudyIONavHost() {
             )
         }
         composable("quiz/decks/{deckId}") { backStackEntry ->
-            val deckId = backStackEntry.arguments?.getString("deckId")?.toLongOrNull() ?: return@composable
+            val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
             QuizScreen(
                 deckId = deckId,
                 onQuizComplete = { navController.popBackStack("home", inclusive = false) }

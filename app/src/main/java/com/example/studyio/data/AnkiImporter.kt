@@ -1,15 +1,15 @@
 package com.example.studyio.data
 
-import com.example.studyio.data.entities.StudyioDatabase
-import com.example.studyio.data.entities.Deck
-import com.example.studyio.data.entities.Note
+import android.database.sqlite.SQLiteDatabase
+import android.util.Log
 import com.example.studyio.data.entities.Card
+import com.example.studyio.data.entities.CardType
+import com.example.studyio.data.entities.Deck
+import com.example.studyio.data.entities.StudyioDatabase
 import org.json.JSONObject
 import java.io.File
 import java.io.InputStream
 import java.util.zip.ZipInputStream
-import android.database.sqlite.SQLiteDatabase
-import android.util.Log
 
 private const val TAG = "StudyIO-AnkiImporter"
 
@@ -63,6 +63,7 @@ suspend fun importAnkiApkgFromStream(
 
         val colCursor = ankiDb.rawQuery("SELECT * FROM col", null)
         var deckCount = 0
+        val ankiDeckIdToOurDeckId = mutableMapOf<Long, String>()
 
         if (colCursor.moveToFirst()) {
             val decksJson = colCursor.getString(colCursor.getColumnIndexOrThrow("decks"))
@@ -71,11 +72,9 @@ suspend fun importAnkiApkgFromStream(
             val decksObj = JSONObject(decksJson)
             for (key in decksObj.keys()) {
                 val deckObj = decksObj.getJSONObject(key)
-                val id = deckObj.getLong("id")
                 val name = deckObj.getString("name")
                 val desc = if (deckObj.has("desc")) deckObj.getString("desc") else null
-
-                Log.i(TAG, "Importing deck: $name (ID: $id)")
+                val id = deckObj.getLong("id")
 
                 // Skip default deck (ID: 1) if it's empty or has generic name
                 if (id == 1L && name == "Default") {
@@ -83,14 +82,16 @@ suspend fun importAnkiApkgFromStream(
                     continue
                 }
 
+                val ourDeckId = java.util.UUID.randomUUID().toString()
                 try {
                     db.deckDao().insertDeck(
                         Deck(
-                            id = id,
+                            id = ourDeckId,
                             name = name,
                             description = desc
                         )
                     )
+                    ankiDeckIdToOurDeckId[id] = ourDeckId
                     deckCount++
                     Log.d(TAG, "Successfully inserted deck: $name")
                 } catch (e: Exception) {
@@ -103,76 +104,52 @@ suspend fun importAnkiApkgFromStream(
         Log.i(TAG, "Imported $deckCount decks")
         onProgress("Importing notes...")
 
-        // 4. Read notes
+        // 4. Read notes and build a map for merging
         Log.d(TAG, "Reading notes...")
-        val notesCursor = ankiDb.rawQuery("SELECT id, mid, flds, tags, guid FROM notes", null)
-        var noteCount = 0
-
+        val notesCursor = ankiDb.rawQuery("SELECT id, flds, tags FROM notes", null)
+        val noteMap = mutableMapOf<Long, Pair<String, String>>()
         while (notesCursor.moveToNext()) {
             val id = notesCursor.getLong(0)
-            val modelId = notesCursor.getLong(1)
-            val fields = notesCursor.getString(2)
-            val tags = notesCursor.getString(3)
-            val guid = notesCursor.getString(4)
-
-            val note = Note(
-                id = id,
-                modelId = modelId,
-                fields = fields,
-                tags = tags,
-                guid = guid
-            )
-
-            try {
-                db.noteDao().insertNote(note)
-                noteCount++
-
-                if (noteCount % 100 == 0) {
-                    Log.d(TAG, "Imported $noteCount notes so far...")
-                    onProgress("Importing notes... ($noteCount)")
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to insert note ID $id: ${e.message}")
-            }
+            val fields = notesCursor.getString(1)
+            val tags = notesCursor.getString(2)
+            noteMap[id] = Pair(fields, tags)
         }
         notesCursor.close()
-
-        Log.i(TAG, "Imported $noteCount notes")
+        Log.i(TAG, "Loaded ${noteMap.size} notes for merging")
         onProgress("Importing cards...")
 
-        // 5. Read cards
+        // 5. Read cards and merge note data
         Log.d(TAG, "Reading cards...")
-        val cardsCursor = ankiDb.rawQuery("SELECT id, nid, did, ord, type, queue, due, ivl, reps, lapses FROM cards", null)
+        val cardsCursor = ankiDb.rawQuery("SELECT id, nid, did, type, due FROM cards", null)
         var cardCount = 0
-
         while (cardsCursor.moveToNext()) {
             val cardId = cardsCursor.getLong(0)
             val noteId = cardsCursor.getLong(1)
             val deckId = cardsCursor.getLong(2)
-            val ord = cardsCursor.getInt(3)
-            val type = cardsCursor.getInt(4)
-            val queue = cardsCursor.getInt(5)
-            val due = cardsCursor.getInt(6)
-            val interval = cardsCursor.getInt(7)
-            val reps = cardsCursor.getInt(8)
-            val lapses = cardsCursor.getInt(9)
+            cardsCursor.getInt(3)
+            val due = cardsCursor.getLong(4)
 
+            val noteData = noteMap[noteId]
+            if (noteData == null) {
+                Log.w(TAG, "No note found for card $cardId (noteId: $noteId), skipping")
+                continue
+            }
+            val (fields, tags) = noteData
+
+            val ourDeckId = ankiDeckIdToOurDeckId[deckId] ?: deckId.toString()
             val card = Card(
-                deckId = deckId,
-                noteId = noteId,
-                ord = ord,
-                type = type,
-                queue = queue,
+                id = java.util.UUID.randomUUID().toString(),
+                deckId = ourDeckId,
+                type = CardType.NEW,
                 due = due,
-                interval = interval,
-                reps = reps,
-                lapses = lapses
+                front = fields.split("\u001F").getOrNull(0) ?: "",
+                back = fields.split("\u001F").drop(1).joinToString("\n"),
+                tags = tags
             )
 
             try {
                 db.cardDao().insertCard(card)
                 cardCount++
-
                 if (cardCount % 100 == 0) {
                     Log.d(TAG, "Imported $cardCount cards so far...")
                     onProgress("Importing cards... ($cardCount)")
@@ -182,13 +159,11 @@ suspend fun importAnkiApkgFromStream(
             }
         }
         cardsCursor.close()
-
         Log.i(TAG, "Imported $cardCount cards")
         onProgress("Finalizing import...")
 
         // Final summary
         Log.i(TAG, "Import completed successfully!")
-        Log.i(TAG, "Summary: $deckCount decks, $noteCount notes, $cardCount cards")
 
     } catch (e: Exception) {
         Log.e(TAG, "Error during import process", e)

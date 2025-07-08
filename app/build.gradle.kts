@@ -91,7 +91,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     testImplementation(kotlin("test"))
 
+    // Hilt for dependency injection
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    
+    // Gson for JSON serialization
+    implementation(libs.gson)
 }

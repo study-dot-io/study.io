@@ -35,9 +35,7 @@ class ExampleUnitTest {
         // Assert decks, notes, and cards are imported
         val testDeck =
             runBlocking { db.deckDao().getAllDecks() }.first { deck -> deck.name.contains("Most Common English Words") }
-        val notes = runBlocking { db.noteDao().getNotesForDeck(testDeck.id) }
-        val cards = runBlocking { db.cardDao().getCardsForDeck(testDeck.id, 200) }
-        assertTrue(notes.isNotEmpty())
+        val cards = runBlocking { db.cardDao().getCardsByDeckId(testDeck.id) }
         assertTrue(cards.isNotEmpty())
     }
 }

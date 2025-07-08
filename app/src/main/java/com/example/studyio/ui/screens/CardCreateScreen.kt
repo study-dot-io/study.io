@@ -47,8 +47,8 @@ import com.example.studyio.data.entities.Deck
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardCreateScreen(
-    deckId: Long,
-    onDeckSelected: (Long) -> Unit,
+    deckId: String,
+    onDeckSelected: (String) -> Unit,
     onBackPressed: () -> Unit,
     onCreatePressed: () -> Unit
 ) {

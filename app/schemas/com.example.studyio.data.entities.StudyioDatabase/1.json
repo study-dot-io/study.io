@@ -2,16 +2,16 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "f211cda7d9da96e551e54593252700ad",
+    "identityHash": "a0840adf6c123ebf3a841fcc7c4b0d0f",
     "entities": [
       {
         "tableName": "decks",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `description` TEXT, `color` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT, `color` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "INTEGER",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -23,8 +23,7 @@
           {
             "fieldPath": "description",
             "columnName": "description",
-            "affinity": "TEXT",
-            "notNull": false
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "color",
@@ -38,91 +37,27 @@
           "columnNames": [
             "id"
           ]
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "notes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `modelId` INTEGER NOT NULL, `fields` TEXT NOT NULL, `tags` TEXT NOT NULL, `guid` TEXT NOT NULL)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "modelId",
-            "columnName": "modelId",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "fields",
-            "columnName": "fields",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "tags",
-            "columnName": "tags",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "guid",
-            "columnName": "guid",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": true,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [],
-        "foreignKeys": []
+        }
       },
       {
         "tableName": "cards",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `deckId` INTEGER NOT NULL, `noteId` INTEGER NOT NULL, `ord` INTEGER NOT NULL, `type` INTEGER NOT NULL, `queue` INTEGER NOT NULL, `due` INTEGER NOT NULL, `interval` INTEGER NOT NULL, `reps` INTEGER NOT NULL, `lapses` INTEGER NOT NULL, `createdAt` TEXT NOT NULL, `isActive` INTEGER NOT NULL, `difficulty` REAL NOT NULL, `stability` REAL NOT NULL, FOREIGN KEY(`deckId`) REFERENCES `decks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`noteId`) REFERENCES `notes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `deckId` TEXT NOT NULL, `type` INTEGER NOT NULL, `due` INTEGER NOT NULL, `front` TEXT NOT NULL, `back` TEXT NOT NULL, `tags` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`deckId`) REFERENCES `decks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "INTEGER",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "deckId",
             "columnName": "deckId",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "noteId",
-            "columnName": "noteId",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "ord",
-            "columnName": "ord",
-            "affinity": "INTEGER",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "type",
             "columnName": "type",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "queue",
-            "columnName": "queue",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -133,50 +68,32 @@
             "notNull": true
           },
           {
-            "fieldPath": "interval",
-            "columnName": "interval",
-            "affinity": "INTEGER",
+            "fieldPath": "front",
+            "columnName": "front",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "reps",
-            "columnName": "reps",
-            "affinity": "INTEGER",
+            "fieldPath": "back",
+            "columnName": "back",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "lapses",
-            "columnName": "lapses",
-            "affinity": "INTEGER",
+            "fieldPath": "tags",
+            "columnName": "tags",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "createdAt",
             "columnName": "createdAt",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "isActive",
-            "columnName": "isActive",
             "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "difficulty",
-            "columnName": "difficulty",
-            "affinity": "REAL",
-            "notNull": true
-          },
-          {
-            "fieldPath": "stability",
-            "columnName": "stability",
-            "affinity": "REAL",
             "notNull": true
           }
         ],
         "primaryKey": {
-          "autoGenerate": true,
+          "autoGenerate": false,
           "columnNames": [
             "id"
           ]
@@ -190,15 +107,6 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_cards_deckId` ON `${TABLE_NAME}` (`deckId`)"
-          },
-          {
-            "name": "index_cards_noteId",
-            "unique": false,
-            "columnNames": [
-              "noteId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_cards_noteId` ON `${TABLE_NAME}` (`noteId`)"
           }
         ],
         "foreignKeys": [
@@ -212,25 +120,13 @@
             "referencedColumns": [
               "id"
             ]
-          },
-          {
-            "table": "notes",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "noteId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
           }
         ]
       }
     ],
-    "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f211cda7d9da96e551e54593252700ad')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a0840adf6c123ebf3a841fcc7c4b0d0f')"
     ]
   }
 }

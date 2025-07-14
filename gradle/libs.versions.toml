@@ -1,6 +1,10 @@
 [versions]
 agp = "8.10.1"
 core = "1.6.1"
+credentials = "1.5.0"
+firebaseBom = "33.16.0"
+firebaseUiAuth = "9.0.0"
+googleid = "1.1.1"
 hiltAndroid = "2.56.2"
 hiltNavigationCompose = "1.2.0"
 kotlin = "2.2.0"
@@ -25,6 +29,13 @@ roomRuntime = "2.7.2"
 [libraries]
 androidx-core = { module = "androidx.test:core", version.ref = "core" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-ui-auth = { module = "com.firebaseui:firebase-ui-auth", version.ref = "firebaseUiAuth" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hiltAndroid" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }

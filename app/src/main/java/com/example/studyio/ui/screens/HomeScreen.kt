@@ -45,11 +45,50 @@ fun HomeScreen(
     onStudyNow: () -> Unit = {},
     onImportApkg: (() -> Unit)? = null,
     onStudyNowForDeck: (Deck) -> Unit = {},
-    onDeleteDeck: (Deck) -> Unit = {}
+    onDeleteDeck: (Deck) -> Unit = {},
+    onNavigateToAuth: () -> Unit = {}
 ) {
     var deckToDelete by remember { mutableStateOf<Deck?>(null) }
+    val user = remember { mutableStateOf(com.google.firebase.auth.FirebaseAuth.getInstance().currentUser) }
+    var showUserInfo by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        Column {
+            Button(
+                onClick = {
+                    if (user.value == null) {
+                        onNavigateToAuth()
+                    } else {
+                        showUserInfo = true
+                    }
+                },
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(if (user.value == null) "Test Auth" else "Show User Info")
+            }
+            if (user.value != null) {
+                Text(
+                    text = "👋 Welcome, ${user.value?.displayName ?: user.value?.email ?: "User"}!",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+            }
+        }
+        if (showUserInfo && user.value != null) {
+            AlertDialog(
+                onDismissRequest = { showUserInfo = false },
+                title = { Text("Signed In") },
+                text = {
+                    Text("You are signed in as: ${user.value?.displayName ?: user.value?.email ?: user.value?.uid}")
+                },
+                confirmButton = {
+                    TextButton(onClick = { showUserInfo = false }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
+
         Scaffold(
             topBar = {
                 TopAppBar(

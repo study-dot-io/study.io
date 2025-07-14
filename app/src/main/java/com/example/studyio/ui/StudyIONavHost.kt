@@ -63,7 +63,8 @@ fun StudyIONavHost() {
                 },
                 onImportApkg = { importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
                 onStudyNowForDeck = { deck -> navController.navigate("quiz/decks/${deck.id}") },
-                onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) }
+                onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) },
+                onNavigateToAuth = { navController.navigate("auth") }
             )
         }
         composable("decks/create") {
@@ -103,6 +104,11 @@ fun StudyIONavHost() {
             QuizScreen(
                 deckId = deckId,
                 onQuizComplete = { navController.popBackStack("home", inclusive = false) }
+            )
+        }
+        composable("auth") {
+            com.example.studyio.ui.screens.AuthScreen(
+                onAuthSuccess = { navController.popBackStack() }
             )
         }
     }

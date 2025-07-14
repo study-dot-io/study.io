@@ -29,8 +29,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.ui.auth.AuthViewModel
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
@@ -51,33 +49,6 @@ fun AuthScreen(onAuthSuccess: () -> Unit) {
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // Google Sign-In launcher
-    val googleSignInLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-                scope.launch {
-                    authViewModel.signInWithCredential(credential) { success, error ->
-                        isLoading = false
-                        if (!success) {
-                            errorMessage = error ?: "Google sign-in failed"
-                        }
-                    }
-                }
-            } catch (e: ApiException) {
-                isLoading = false
-                errorMessage = "Google sign-in failed: ${e.message}"
-                Log.e("AuthScreen", "Google sign-in failed", e)
-            }
-        } else {
-            isLoading = false
-        }
-    }
 
     // Check if user is already signed in
     LaunchedEffect(user) {
@@ -326,46 +297,6 @@ fun AuthScreen(onAuthSuccess: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Google Sign-In button
-                OutlinedButton(
-                    onClick = {
-                        isLoading = true
-                        errorMessage = null
-                        
-                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                            .requestIdToken("YOUR_WEB_CLIENT_ID") // Replace with your web client ID from google-services.json
-                            .requestEmail()
-                            .build()
-                        
-                        val googleSignInClient = GoogleSignIn.getClient(context, gso)
-                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    enabled = !isLoading,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(
-                            text = "Continue with Google",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
-
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Switch between sign in and sign up

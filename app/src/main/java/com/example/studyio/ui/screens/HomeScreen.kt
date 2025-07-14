@@ -29,7 +29,7 @@ import com.example.studyio.data.entities.Deck
 import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.ui.home.HomeViewModel
-import com.google.firebase.auth.FirebaseAuth
+import com.example.studyio.ui.auth.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,21 +51,11 @@ fun HomeScreen(
     onSignOut: (() -> Unit)? = null
 ) {
     var deckToDelete by remember { mutableStateOf<Deck?>(null) }
-    val user = remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
     var showUserInfo by remember { mutableStateOf(false) }
-
-    DisposableEffect(Unit) {
-        val auth = FirebaseAuth.getInstance()
-        val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-            user.value = firebaseAuth.currentUser
-        }
-        
-        auth.addAuthStateListener(authStateListener)
-        
-        onDispose {
-            auth.removeAuthStateListener(authStateListener)
-        }
-    }
+    
+    // Use the centralized AuthViewModel
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val user by authViewModel.currentUser.collectAsState()
 
     Scaffold(
         topBar = {
@@ -125,7 +115,7 @@ fun HomeScreen(
             .padding(paddingValues)) {
             Button(
                 onClick = {
-                    if (user.value == null) {
+                    if (user == null) {
                         onNavigateToAuth()
                     } else {
                         showUserInfo = true
@@ -133,21 +123,21 @@ fun HomeScreen(
                 },
                 modifier = Modifier.padding(16.dp)
             ) {
-                Text(if (user.value == null) "Test Auth" else "Show User Info")
+                Text(if (user == null) "Test Auth" else "Show User Info")
             }
-            if (user.value != null) {
+            if (user != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 ) {
                     Text(
-                        text = "👋 Welcome, ${user.value?.displayName ?: user.value?.email ?: "User"}!",
+                        text = "👋 Welcome, ${user?.displayName ?: user?.email ?: "User"}!",
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f)
                     )
                     Button(
                         onClick = {
-                            FirebaseAuth.getInstance().signOut()
+                            authViewModel.signOut()
                             if (onSignOut != null) onSignOut()
                         },
                         modifier = Modifier.padding(start = 8.dp)
@@ -156,12 +146,12 @@ fun HomeScreen(
                     }
                 }
             }
-            if (showUserInfo && user.value != null) {
+            if (showUserInfo && user != null) {
                 AlertDialog(
                     onDismissRequest = { showUserInfo = false },
                     title = { Text("Signed In") },
                     text = {
-                        Text("You are signed in as: ${user.value?.displayName ?: user.value?.email ?: user.value?.uid}")
+                        Text("You are signed in as: ${user?.displayName ?: user?.email ?: user?.uid}")
                     },
                     confirmButton = {
                         TextButton(onClick = { showUserInfo = false }) {

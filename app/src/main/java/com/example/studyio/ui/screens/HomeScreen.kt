@@ -29,6 +29,7 @@ import com.example.studyio.data.entities.Deck
 import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.ui.home.HomeViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,14 +47,82 @@ fun HomeScreen(
     onImportApkg: (() -> Unit)? = null,
     onStudyNowForDeck: (Deck) -> Unit = {},
     onDeleteDeck: (Deck) -> Unit = {},
-    onNavigateToAuth: () -> Unit = {}
+    onNavigateToAuth: () -> Unit = {},
+    onSignOut: (() -> Unit)? = null
 ) {
     var deckToDelete by remember { mutableStateOf<Deck?>(null) }
-    val user = remember { mutableStateOf(com.google.firebase.auth.FirebaseAuth.getInstance().currentUser) }
+    val user = remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
     var showUserInfo by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column {
+    DisposableEffect(Unit) {
+        val auth = FirebaseAuth.getInstance()
+        val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            user.value = firebaseAuth.currentUser
+        }
+        
+        auth.addAuthStateListener(authStateListener)
+        
+        onDispose {
+            auth.removeAuthStateListener(authStateListener)
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "StudyIO",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                actions = {
+                    IconButton(onClick = { /* Settings */ }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        },
+        floatingActionButton = {
+            var fabExpanded by remember { mutableStateOf(false) }
+            Box {
+                FloatingActionButton(
+                    onClick = { fabExpanded = !fabExpanded },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Actions")
+                }
+                DropdownMenu(
+                    expanded = fabExpanded,
+                    onDismissRequest = { fabExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Create Deck") },
+                        onClick = {
+                            fabExpanded = false
+                            onCreateDeck()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Import Anki Deck (.apkg)") },
+                        onClick = {
+                            fabExpanded = false
+                            if (onImportApkg != null) onImportApkg()
+                        },
+                        enabled = !isImporting
+                    )
+                }
+            }
+        }
+    ) { paddingValues ->
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)) {
             Button(
                 onClick = {
                     if (user.value == null) {
@@ -67,85 +136,43 @@ fun HomeScreen(
                 Text(if (user.value == null) "Test Auth" else "Show User Info")
             }
             if (user.value != null) {
-                Text(
-                    text = "👋 Welcome, ${user.value?.displayName ?: user.value?.email ?: "User"}!",
-                    style = MaterialTheme.typography.titleMedium,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                )
-            }
-        }
-        if (showUserInfo && user.value != null) {
-            AlertDialog(
-                onDismissRequest = { showUserInfo = false },
-                title = { Text("Signed In") },
-                text = {
-                    Text("You are signed in as: ${user.value?.displayName ?: user.value?.email ?: user.value?.uid}")
-                },
-                confirmButton = {
-                    TextButton(onClick = { showUserInfo = false }) {
-                        Text("OK")
-                    }
-                }
-            )
-        }
-
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "StudyIO",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    actions = {
-                        IconButton(onClick = { /* Settings */ }) {
-                            Icon(Icons.Default.Settings, contentDescription = "Settings")
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    Text(
+                        text = "👋 Welcome, ${user.value?.displayName ?: user.value?.email ?: "User"}!",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
                     )
-                )
-            },
-            floatingActionButton = {
-                var fabExpanded by remember { mutableStateOf(false) }
-                Box {
-                    FloatingActionButton(
-                        onClick = { fabExpanded = !fabExpanded },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    Button(
+                        onClick = {
+                            FirebaseAuth.getInstance().signOut()
+                            if (onSignOut != null) onSignOut()
+                        },
+                        modifier = Modifier.padding(start = 8.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Actions")
-                    }
-                    DropdownMenu(
-                        expanded = fabExpanded,
-                        onDismissRequest = { fabExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Create Deck") },
-                            onClick = {
-                                fabExpanded = false
-                                onCreateDeck()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Import Anki Deck (.apkg)") },
-                            onClick = {
-                                fabExpanded = false
-                                if (onImportApkg != null) onImportApkg()
-                            },
-                            enabled = !isImporting
-                        )
+                        Text("Sign Out")
                     }
                 }
             }
-        ) { paddingValues ->
+            if (showUserInfo && user.value != null) {
+                AlertDialog(
+                    onDismissRequest = { showUserInfo = false },
+                    title = { Text("Signed In") },
+                    text = {
+                        Text("You are signed in as: ${user.value?.displayName ?: user.value?.email ?: user.value?.uid}")
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showUserInfo = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {

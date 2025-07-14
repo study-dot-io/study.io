@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.importer.ImportViewModel
+import com.example.studyio.ui.screens.AuthScreen
 import com.example.studyio.ui.screens.CardCreateScreen
 import com.example.studyio.ui.screens.CreateDeckScreen
 import com.example.studyio.ui.screens.DeckDetailScreen
@@ -107,7 +108,7 @@ fun StudyIONavHost() {
             )
         }
         composable("auth") {
-            com.example.studyio.ui.screens.AuthScreen(
+            AuthScreen(
                 onAuthSuccess = { navController.popBackStack() }
             )
         }

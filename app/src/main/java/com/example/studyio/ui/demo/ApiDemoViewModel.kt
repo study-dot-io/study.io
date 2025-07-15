@@ -77,7 +77,6 @@ class ApiDemoViewModel @Inject constructor(
     }
     
     /**
-     * Example 3: Access protected route (the main pattern your groupmates should follow)
      * This demonstrates the typical flow for authenticated API calls
      */
     fun accessProtectedRoute() {

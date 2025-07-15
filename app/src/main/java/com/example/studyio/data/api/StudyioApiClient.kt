@@ -37,7 +37,6 @@ class StudyioApiClient @Inject constructor() {
     
     /**
      * Get Firebase ID token for the current user
-     * This is a key method that your groupmates will need to understand
      */
     private suspend fun getFirebaseIdToken(): String? {
         return try {

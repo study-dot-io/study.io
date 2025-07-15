@@ -1,12 +1,32 @@
 package com.example.studyio.ui.demo
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -16,7 +36,6 @@ import com.example.studyio.ui.auth.AuthViewModel
 
 /**
  * Demo screen showing API integration examples
- * This screen demonstrates to your groupmates how to:
  * 1. Make API calls from Compose UI
  * 2. Handle authentication state
  * 3. Display results and handle errors
@@ -40,20 +59,18 @@ fun ApiDemoScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Back Button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start
         ) {
             IconButton(onClick = onBack) {
                 Icon(
-                    Icons.Default.ArrowBack,
+                    Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back to Home"
                 )
             }
         }
         
-        // Header
         Text(
             text = "API Integration Demo",
             style = MaterialTheme.typography.headlineMedium,
@@ -108,9 +125,11 @@ fun ApiDemoScreen(
                     This demo shows how to make authenticated API calls:
                     
                     1. Start your Flask server: python server/app.py
-                    2. Try the buttons below to see different API patterns
-                    3. Check StudyioApiClient.kt for implementation details
-                    4. Use getProtectedData() as the main pattern for authenticated calls
+                    2. Create a port forward to your Android emulator so it can access the server running on your laptop:
+                       adb reverse tcp:5000 tcp:5000
+                    3. Try the buttons below to see different API patterns
+                    4. Check StudyioApiClient.kt for implementation details
+                    5. Use getProtectedData() as the main pattern for authenticated calls
                     
                     Key Pattern:
                     - Get Firebase ID token from current user

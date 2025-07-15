@@ -17,3 +17,14 @@ local.properties
 
 # Database schemas
 app/schemas/
+
+# Service account key
+server/private-service-account-key.json
+
+# Virtual environment files
+server/bin/
+server/include/
+server/lib/
+server/lib64
+server/pyvenv.cfg
+server/.idea/

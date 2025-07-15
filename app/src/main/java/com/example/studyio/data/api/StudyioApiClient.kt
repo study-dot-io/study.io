@@ -25,11 +25,6 @@ class StudyioApiClient @Inject constructor() {
         .addInterceptor(HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         })
-        .addInterceptor { chain ->
-            val request = chain.request()
-            println("Sending request to ${request.url} with headers: ${request.headers}")
-            chain.proceed(request)
-        }
         .build()
     
     private val retrofit = Retrofit.Builder()

@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.ksp)
     kotlin("plugin.serialization") version "2.0.21"
     alias(libs.plugins.hilt.android)
+    
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -98,4 +100,23 @@ dependencies {
     
     // Gson for JSON serialization
     implementation(libs.gson)
+    
+    // Firebase BoM
+    implementation(platform(libs.firebase.bom))
+    
+    // Firebase products we want to add: BoM will manage versions for us, so only a BoM version is specified in libs.version.toml
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.ui.auth)
+
+    // Google Play Services for authentication
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    
+    // HTTP client for API calls
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 }

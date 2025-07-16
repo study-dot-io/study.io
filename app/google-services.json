@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "568723023067",
+    "project_id": "studyio-38744",
+    "storage_bucket": "studyio-38744.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:568723023067:android:953d727859423e08cb98fe",
+        "android_client_info": {
+          "package_name": "com.example.studyio"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "568723023067-8rv5vdep60u0k2oa5kiauvaa090lom5t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4OUa9d4wV997YlME36aynH8XCw2KOs_8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "568723023067-8rv5vdep60u0k2oa5kiauvaa090lom5t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

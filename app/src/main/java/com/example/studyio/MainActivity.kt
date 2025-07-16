@@ -23,9 +23,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Log build version at startup -- sanity check to make sure code change was applied (gradle clean -> gradle build)
-        Log.i(TAG, "StudyIO Starting - 4PM LAST CHANGED")
-
         setContent {
             StudyIOTheme {
                 Surface(

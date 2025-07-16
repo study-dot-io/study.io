@@ -13,11 +13,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.importer.ImportViewModel
+import com.example.studyio.ui.screens.AuthScreen
 import com.example.studyio.ui.screens.CardCreateScreen
 import com.example.studyio.ui.screens.CreateDeckScreen
 import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.screens.HomeScreen
 import com.example.studyio.ui.screens.QuizScreen
+import com.example.studyio.ui.demo.ApiDemoScreen
 
 @Composable
 fun StudyIONavHost() {
@@ -63,7 +65,9 @@ fun StudyIONavHost() {
                 },
                 onImportApkg = { importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
                 onStudyNowForDeck = { deck -> navController.navigate("quiz/decks/${deck.id}") },
-                onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) }
+                onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) },
+                onNavigateToAuth = { navController.navigate("auth") },
+                onNavigateToApiDemo = { navController.navigate("apiDemo") }
             )
         }
         composable("decks/create") {
@@ -103,6 +107,16 @@ fun StudyIONavHost() {
             QuizScreen(
                 deckId = deckId,
                 onQuizComplete = { navController.popBackStack("home", inclusive = false) }
+            )
+        }
+        composable("auth") {
+            AuthScreen(
+                onAuthSuccess = { navController.popBackStack() }
+            )
+        }
+        composable("apiDemo") {
+            ApiDemoScreen(
+                onBack = { navController.popBackStack() }
             )
         }
     }

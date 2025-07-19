@@ -1,6 +1,10 @@
 package com.example.studyio.ui.screens
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -21,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -28,8 +33,20 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.studyio.data.entities.Deck
 import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.auth.AuthViewModel
+import com.firebase.ui.auth.data.model.User
+//import com.firebase.ui.auth.data.model.User
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.Request
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,7 +151,7 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.secondary
                 )
             ) {
-                Text("🚀 API Demo (Temporary)")
+                Text("🚀  API Demo (Temporary)")
             }
             
             if (user != null) {
@@ -224,6 +241,9 @@ fun HomeScreen(
                 item {
                     Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
                 }
+                item{
+                    GetDocumentFromUser()
+                }
             }
         }
 
@@ -262,6 +282,7 @@ fun HomeScreen(
             )
         }
     }
+
 }
 
 @Composable
@@ -538,6 +559,89 @@ fun DeckCard(
             }
             IconButton(onClick = onReview, enabled = (cardCountMap[deck.id] ?: 0) > 0) {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Review")
+            }
+        }
+    }
+}
+
+// Upload to LLM feature
+@Composable
+fun GetDocumentFromUser(user: FirebaseUser? = null) {
+    // GEt context -> required for all file ops
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var fileName by remember {mutableStateOf<String?>(null)}
+    var filePath by remember {mutableStateOf<Uri?>(null)}
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        filePath = uri
+        fileName = uri?.lastPathSegment
+    }
+
+        Column(
+            modifier = Modifier.padding(10.dp)
+        ) {
+
+            Button(onClick = { launcher.launch("*/*") }) {
+                Text("Upload Document")
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            fileName?.let {
+                Text(text = "Selected File: $it")
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Button(
+                onClick = {
+                    if (filePath != null && user != null) {
+                        scope.launch {
+                                UploadDocumentToLLM(user,context, filePath!!)
+                    }
+                    }
+                },
+                enabled = filePath != null
+            ){
+                Text("Uploaded")
+            }
+
+        }
+}
+
+suspend fun UploadDocumentToLLM(user: FirebaseUser, context: Context, filePath: Uri){
+    // get id token
+    var idToken: String? = null
+    user.getIdToken(true)
+        .addOnSuccessListener { result ->
+            idToken = result.token
+        }
+    val inputStream = context.contentResolver.openInputStream(filePath) ?: return
+    val bytes = inputStream.readBytes()
+    inputStream.close()
+    val fileName = filePath.lastPathSegment ?: "document.pdf"
+    val requestBody = MultipartBody.Builder()
+        .setType(MultipartBody.FORM)
+        .addFormDataPart("login_token", idToken.toString())
+        .addFormDataPart(
+            "file", fileName,
+            bytes.toRequestBody("application/octet-stream".toMediaTypeOrNull())
+        )
+        .build()
+
+    val request = Request.Builder()
+        .url("http://10.102.170.11:5000/generate_flashcards")
+        .post(requestBody)
+        .build()
+    val client = OkHttpClient()
+    withContext(Dispatchers.IO) {
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                Log.e("Upload", "Failed: ${response.code}")
+            } else {
+                val responseBody = response.body?.string()
+                Log.d("Upload", "Success: $responseBody")
             }
         }
     }

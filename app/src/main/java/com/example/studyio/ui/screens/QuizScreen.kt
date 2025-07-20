@@ -7,10 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.studyio.data.entities.QuizSession
-import com.example.studyio.data.entities.QuizQuestion
 import com.example.studyio.ui.quiz.QuizViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun QuizScreen(

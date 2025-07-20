@@ -81,6 +81,9 @@ interface QuizQuestionDao {
 
     @Query("SELECT cards.deckId AS deckId, cards.front as cardName, AVG(quiz_questions.rating) as avgRating FROM quiz_questions JOIN cards ON quiz_questions.cardId = cards.id GROUP BY quiz_questions.cardId ORDER BY avgRating ASC LIMIT 5")
     suspend fun getWorstRatedQuestions(): List<CardRating>
+
+    @Query("SELECT reviewedAt, COUNT(*) as reviewCount FROM quiz_questions GROUP BY strftime('%Y-%m-%d', datetime(reviewedAt, 'unixepoch')) LIMIT 30")
+    suspend fun getReviewHeatmapData(): List<ReviewHeatmapData>
 }
 
 // Define data classes for the custom query results
@@ -94,6 +97,11 @@ data class CardRating(
     val deckId: String,
     val cardName: String,
     val avgRating: Float
+)
+
+data class ReviewHeatmapData(
+    val reviewedAt: Long,
+    val reviewCount: Int
 )
 
 @Database(entities = [Deck::class, Card::class, QuizSession::class, QuizQuestion::class], version = 1)

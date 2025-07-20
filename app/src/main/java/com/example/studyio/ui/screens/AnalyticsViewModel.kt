@@ -7,6 +7,7 @@ import com.example.studyio.data.entities.QuizQuestionRepository
 import com.example.studyio.data.entities.QuizSessionRepository
 import com.example.studyio.data.entities.CardRating
 import com.example.studyio.data.entities.DeckReviewCount
+import com.example.studyio.data.entities.ReviewHeatmapData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +39,9 @@ class AnalyticsViewModel @Inject constructor(
     private val _mostReviewedDecks = MutableStateFlow(emptyList<DeckReviewCount>())
     val mostReviewedDecks: StateFlow<List<DeckReviewCount>> = _mostReviewedDecks
 
+    private val _reviewHeatmapData = MutableStateFlow(emptyList<ReviewHeatmapData>())
+    val reviewHeatmapData: StateFlow<List<ReviewHeatmapData>> = _reviewHeatmapData
+
     init {
         fetchAnalyticsData()
     }
@@ -50,6 +54,10 @@ class AnalyticsViewModel @Inject constructor(
             _cardsReviewed.value = quizQuestionRepository.getCardsReviewedLastMonth()
             _worstRatedCards.value = quizQuestionRepository.getWorstRatedCards()
             _mostReviewedDecks.value = quizSessionRepository.getMostReviewedDecks()
+
+            val heatmapData = quizQuestionRepository.getReviewHeatmapData()
+            val paddedHeatmapData = List(30 - heatmapData.size) { ReviewHeatmapData(0, 0) } + heatmapData
+            _reviewHeatmapData.value = paddedHeatmapData.takeLast(30)
         }
     }
 }

@@ -49,4 +49,5 @@ class QuizQuestionRepository @Inject constructor(private val quizQuestionDao: Qu
     suspend fun insertQuizQuestion(question: QuizQuestion) {
         quizQuestionDao.insertQuizQuestion(question)
     }
+    suspend fun getReviewHeatmapData(): List<ReviewHeatmapData> = quizQuestionDao.getReviewHeatmapData()
 }

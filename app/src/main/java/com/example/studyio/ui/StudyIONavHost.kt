@@ -20,6 +20,7 @@ import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.screens.HomeScreen
 import com.example.studyio.ui.screens.QuizScreen
 import com.example.studyio.ui.demo.ApiDemoScreen
+import com.example.studyio.ui.screens.AnalyticsScreen
 
 @Composable
 fun StudyIONavHost() {
@@ -67,7 +68,8 @@ fun StudyIONavHost() {
                 onStudyNowForDeck = { deck -> navController.navigate("quiz/decks/${deck.id}") },
                 onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) },
                 onNavigateToAuth = { navController.navigate("auth") },
-                onNavigateToApiDemo = { navController.navigate("apiDemo") }
+                onNavigateToApiDemo = { navController.navigate("apiDemo") },
+                onNavigateToAnalytics = { navController.navigate("analytics") }
             )
         }
         composable("decks/create") {
@@ -117,6 +119,17 @@ fun StudyIONavHost() {
         composable("apiDemo") {
             ApiDemoScreen(
                 onBack = { navController.popBackStack() }
+            )
+        }
+        composable("analytics") {
+            AnalyticsScreen(
+                totalFlashcardsReviewed = 0, // TODO: Replace with real data
+                totalFlashcardsMastered = 0, // TODO: Replace with real data
+                totalFlashcardsCreated = 0, // TODO: Replace with real data
+                averageRating = 0f, // TODO: Replace with real data
+                cardsReviewed = 0, // TODO: Replace with real data
+                worstRatedCards = emptyList(), // TODO: Replace with real data
+                mostReviewedDecks = emptyList() // TODO: Replace with real data
             )
         }
     }

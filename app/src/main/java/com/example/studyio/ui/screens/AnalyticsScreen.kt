@@ -1,5 +1,6 @@
 package com.example.studyio.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -10,18 +11,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
-    totalFlashcardsReviewed: Int,
-    totalFlashcardsMastered: Int,
-    totalFlashcardsCreated: Int,
-    averageRating: Float,
-    cardsReviewed: Int,
-    worstRatedCards: List<Pair<String, Float>>, // Pair of card name and rating
-    mostReviewedDecks: List<Pair<String, Int>>, // Pair of deck name and review count
+    viewModel: AnalyticsViewModel = hiltViewModel(),
+    onDeckSelected: (String) -> Unit,
 ) {
+    val totalFlashcardsCreated by viewModel.totalCardsCreated.collectAsState()
+    val totalFlashcardsReviewed by viewModel.totalCardsReviewed.collectAsState()
+    val averageRating by viewModel.averageRating.collectAsState()
+    val cardsReviewed by viewModel.cardsReviewed.collectAsState()
+    val worstRatedCards by viewModel.worstRatedCards.collectAsState()
+    val mostReviewedDecks by viewModel.mostReviewedDecks.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -65,10 +72,6 @@ fun AnalyticsScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Created", fontSize = 16.sp, fontWeight = FontWeight.Medium)
                         Text("$totalFlashcardsCreated", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Mastered", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                        Text("$totalFlashcardsMastered", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Reviewed", fontSize = 16.sp, fontWeight = FontWeight.Medium)
@@ -145,13 +148,15 @@ fun AnalyticsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text("🟥 Cards You Struggle With", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    worstRatedCards.forEach { (cardName, rating) ->
+                    worstRatedCards.forEach { (deckId, front, rating) ->
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onDeckSelected(deckId) },
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(cardName, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                            Text("⭐ $rating", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text(front, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                            Text("⭐ $rating", fontSize = 16.sp, fontWeight = FontWeight.Light)
                         }
                     }
                 }
@@ -170,13 +175,15 @@ fun AnalyticsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text("📚 Top Decks Used", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    mostReviewedDecks.forEach { (deckName, reviewCount) ->
+                    mostReviewedDecks.forEach { (deckId, deckName,  reviewCount) ->
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onDeckSelected(deckId) },
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(deckName, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                            Text("$reviewCount reviews", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text("Deck $deckName", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                            Text("$reviewCount reviews", fontSize = 16.sp, fontWeight = FontWeight.Light)
                         }
                     }
                 }

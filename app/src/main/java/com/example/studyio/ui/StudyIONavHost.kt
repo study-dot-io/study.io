@@ -123,13 +123,9 @@ fun StudyIONavHost() {
         }
         composable("analytics") {
             AnalyticsScreen(
-                totalFlashcardsReviewed = 0, // TODO: Replace with real data
-                totalFlashcardsMastered = 0, // TODO: Replace with real data
-                totalFlashcardsCreated = 0, // TODO: Replace with real data
-                averageRating = 0f, // TODO: Replace with real data
-                cardsReviewed = 0, // TODO: Replace with real data
-                worstRatedCards = emptyList(), // TODO: Replace with real data
-                mostReviewedDecks = emptyList() // TODO: Replace with real data
+                onDeckSelected = { deckId: String ->
+                    navController.navigate("decks/$deckId")
+                },
             )
         }
     }

@@ -20,6 +20,7 @@ import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.screens.HomeScreen
 import com.example.studyio.ui.screens.QuizScreen
 import com.example.studyio.ui.demo.ApiDemoScreen
+import com.example.studyio.ui.screens.AnalyticsScreen
 
 @Composable
 fun StudyIONavHost() {
@@ -67,7 +68,8 @@ fun StudyIONavHost() {
                 onStudyNowForDeck = { deck -> navController.navigate("quiz/decks/${deck.id}") },
                 onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) },
                 onNavigateToAuth = { navController.navigate("auth") },
-                onNavigateToApiDemo = { navController.navigate("apiDemo") }
+                onNavigateToApiDemo = { navController.navigate("apiDemo") },
+                onNavigateToAnalytics = { navController.navigate("analytics") }
             )
         }
         composable("decks/create") {
@@ -117,6 +119,13 @@ fun StudyIONavHost() {
         composable("apiDemo") {
             ApiDemoScreen(
                 onBack = { navController.popBackStack() }
+            )
+        }
+        composable("analytics") {
+            AnalyticsScreen(
+                onDeckSelected = { deckId: String ->
+                    navController.navigate("decks/$deckId")
+                },
             )
         }
     }

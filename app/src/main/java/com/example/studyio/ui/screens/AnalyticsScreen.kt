@@ -1,7 +1,6 @@
 package com.example.studyio.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -28,8 +27,6 @@ fun AnalyticsScreen(
     viewModel: AnalyticsViewModel = hiltViewModel(),
     onDeckSelected: (String) -> Unit,
 ) {
-    val totalFlashcardsCreated by viewModel.totalCardsCreated.collectAsState()
-    val totalFlashcardsReviewed by viewModel.totalCardsReviewed.collectAsState()
     val averageRating by viewModel.averageRating.collectAsState()
     val cardsReviewed by viewModel.cardsReviewed.collectAsState()
     val worstRatedCards by viewModel.worstRatedCards.collectAsState()

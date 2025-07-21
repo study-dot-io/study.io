@@ -79,7 +79,7 @@ interface QuizQuestionDao {
     @Query("SELECT COUNT(*) FROM quiz_questions WHERE reviewedAt >= strftime('%s', 'now', '-1 month')")
     suspend fun getReviewedLastMonthQuestions(): Int
 
-    @Query("SELECT cards.deckId AS deckId, cards.front as cardName, AVG(quiz_questions.rating) as avgRating FROM quiz_questions JOIN cards ON quiz_questions.cardId = cards.id GROUP BY quiz_questions.cardId ORDER BY avgRating ASC LIMIT 5")
+    @Query("SELECT cards.deckId AS deckId, cards.front as front, AVG(quiz_questions.rating) as avgRating FROM quiz_questions JOIN cards ON quiz_questions.cardId = cards.id GROUP BY quiz_questions.cardId ORDER BY avgRating ASC LIMIT 5")
     suspend fun getWorstRatedQuestions(): List<CardRating>
 
     @Query("SELECT reviewedAt, COUNT(*) as reviewCount FROM quiz_questions GROUP BY strftime('%Y-%m-%d', datetime(reviewedAt, 'unixepoch')) LIMIT 30")
@@ -95,7 +95,7 @@ data class DeckReviewCount(
 
 data class CardRating(
     val deckId: String,
-    val cardName: String,
+    val front: String,
     val avgRating: Float
 )
 

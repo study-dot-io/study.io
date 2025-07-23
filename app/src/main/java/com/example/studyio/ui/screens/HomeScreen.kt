@@ -49,8 +49,8 @@ fun HomeScreen(
     onDeleteDeck: (Deck) -> Unit = {},
     onNavigateToAuth: () -> Unit = {},
     onSignOut: (() -> Unit)? = null,
-    onNavigateToApiDemo: () -> Unit = {},
-    onNavigateToAnalytics: () -> Unit = {} // New parameter for analytics navigation
+//    onNavigateToApiDemo: () -> Unit = {},
+//    onNavigateToAnalytics: () -> Unit = {} // New parameter for analytics navigation
 ) {
     var deckToDelete by remember { mutableStateOf<Deck?>(null) }
     var showUserInfo by remember { mutableStateOf(false) }
@@ -128,25 +128,25 @@ fun HomeScreen(
             }
             
             // Temporary API Demo Button
-            Button(
-                onClick = onNavigateToApiDemo,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
-            ) {
-                Text("🚀 API Demo (Temporary)")
-            }
+//            Button(
+//                onClick = onNavigateToApiDemo,
+//                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = MaterialTheme.colorScheme.secondary
+//                )
+//            ) {
+//                Text("🚀 API Demo (Temporary)")
+//            }
 
-            Button(
-                onClick = onNavigateToAnalytics,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
-            ) {
-                Text("Analytics")
-            }
+//            Button(
+//                onClick = onNavigateToAnalytics,
+//                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = MaterialTheme.colorScheme.secondary
+//                )
+//            ) {
+//                Text("Analytics")
+//            }
 
             if (user != null) {
                 Row(

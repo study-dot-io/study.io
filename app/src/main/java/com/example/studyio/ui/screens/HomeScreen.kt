@@ -30,6 +30,7 @@ import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.auth.AuthViewModel
+import androidx.compose.material.icons.filled.Person
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +51,9 @@ fun HomeScreen(
     onNavigateToAuth: () -> Unit = {},
     onSignOut: (() -> Unit)? = null,
 ) {
-    var deckToDelete by remember { mutableStateOf<Deck?>(null) }
+//    var deckToDelete by remember { mutableStateOf<Deck?>(null) }
+    var selectedDeck by remember { mutableStateOf<Deck?>(null) }
+    val homeViewModel: HomeViewModel = hiltViewModel()
     var showUserInfo by remember { mutableStateOf(false) }
     
     val authViewModel: AuthViewModel = hiltViewModel()
@@ -67,6 +70,16 @@ fun HomeScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = {
+                        if (user == null) {
+                            onNavigateToAuth()
+                        } else {
+                            showUserInfo = true
+                        }
+                    }) {
+                        Icon(Icons.Default.Person, contentDescription = "User Info")
+                    }
+
                     IconButton(onClick = { /* Settings */ }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
@@ -112,18 +125,18 @@ fun HomeScreen(
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)) {
-            Button(
-                onClick = {
-                    if (user == null) {
-                        onNavigateToAuth()
-                    } else {
-                        showUserInfo = true
-                    }
-                },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(if (user == null) "Test Auth" else "Show User Info")
-            }
+//            Button(
+//                onClick = {
+//                    if (user == null) {
+//                        onNavigateToAuth()
+//                    } else {
+//                        showUserInfo = true
+//                    }
+//                },
+//                modifier = Modifier.padding(16.dp)
+//            ) {
+//                Text(if (user == null) "Test Auth" else "Show User Info")
+//            }
             
 
             if (user != null) {
@@ -206,7 +219,7 @@ fun HomeScreen(
                         deck = deck,
                         onClick = { onDeckClick(deck) },
                         onReview = { onStudyNowForDeck(deck) },
-                        onLongPress = { deckToDelete = deck }
+                        onLongPress = { selectedDeck = deck }
                     )
                 }
 
@@ -230,22 +243,36 @@ fun HomeScreen(
         }
 
         // Delete deck confirmation dialog
-        deckToDelete?.let { deck ->
+        selectedDeck?.let { deck ->
             AlertDialog(
-                onDismissRequest = { deckToDelete = null },
-                title = { Text("Delete Deck") },
-                text = { Text("Are you sure you want to delete the deck '${deck.name}'?") },
+                onDismissRequest = { selectedDeck = null },
+                title = { Text("Update Deck") },
+                text = { Text("Update the deck '${deck.name}'?") },
                 confirmButton = {
                     TextButton(onClick = {
-                        onDeleteDeck(deck)
-                        deckToDelete = null
+                        val updatedDeck = deck.copy(isPublic = !deck.isPublic)
+                        homeViewModel.updateDeck(updatedDeck)
+//                        onDeleteDeck(deck)
+                        selectedDeck = null
                     }) {
-                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                        Text(if (deck.isPublic) "Make Private" else "Make Public")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { deckToDelete = null }) {
-                        Text("Cancel")
+//                    TextButton(onClick = { selectedDeck = null }) {
+//                        Text("Cancel")
+//                    }
+                    Row {
+                        TextButton(onClick = {
+                            onDeleteDeck(deck)
+                            selectedDeck = null
+                        }) {
+                            Text("Delete", color = MaterialTheme.colorScheme.error)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        TextButton(onClick = { selectedDeck = null }) {
+                            Text("Cancel")
+                        }
                     }
                 }
             )
@@ -506,12 +533,26 @@ fun DeckCard(
                 modifier = Modifier
                     .weight(1f)
             ) {
-                Text(
-                    text = deck.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+//                Text(
+//                    text = deck.name,
+//                    style = MaterialTheme.typography.titleMedium,
+//                    fontWeight = FontWeight.SemiBold,
+//                    color = MaterialTheme.colorScheme.onSurface
+//                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = deck.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (deck.isPublic) "(Public)" else "(Private)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 deck.description?.let {
                     Text(
                         text = it,

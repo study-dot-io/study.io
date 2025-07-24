@@ -1,5 +1,6 @@
 package com.example.studyio.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.entities.Deck
@@ -57,6 +58,15 @@ class HomeViewModel @Inject constructor(
             deckRepository.deleteDeck(deckId)
             loadDecks()
             onComplete?.invoke()
+        }
+    }
+
+    fun updateDeck(deck: Deck) {
+        viewModelScope.launch {
+            Log.d("HomeViewModel", "Updating deck: ${deck.name}, isPublic = ${deck.isPublic}")
+            deckRepository.updateDeck(deck)
+//            loadDecks() // refresh UI after update
+            Events.decksUpdated()
         }
     }
 }

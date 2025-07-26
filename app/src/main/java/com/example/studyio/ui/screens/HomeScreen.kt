@@ -37,16 +37,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.auth.AuthViewModel
 import com.firebase.ui.auth.data.model.User
-//import com.firebase.ui.auth.data.model.User
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.coroutines.tasks.await
+import android.util.Base64
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -242,7 +245,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
                 }
                 item{
-                    GetDocumentFromUser()
+                    GetDocumentFromUser(user)
                 }
             }
         }
@@ -568,6 +571,7 @@ fun DeckCard(
 @Composable
 fun GetDocumentFromUser(user: FirebaseUser? = null) {
     // GEt context -> required for all file ops
+    Log.d("GetDocument", "Entered the get document function")
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var fileName by remember {mutableStateOf<String?>(null)}
@@ -597,6 +601,7 @@ fun GetDocumentFromUser(user: FirebaseUser? = null) {
             Button(
                 onClick = {
                     if (filePath != null && user != null) {
+                        Log.d("GetDocument", "Should call the llm function")
                         scope.launch {
                                 UploadDocumentToLLM(user,context, filePath!!)
                     }
@@ -604,7 +609,7 @@ fun GetDocumentFromUser(user: FirebaseUser? = null) {
                 },
                 enabled = filePath != null
             ){
-                Text("Uploaded")
+                Text("Upload")
             }
 
         }
@@ -612,29 +617,44 @@ fun GetDocumentFromUser(user: FirebaseUser? = null) {
 
 suspend fun UploadDocumentToLLM(user: FirebaseUser, context: Context, filePath: Uri){
     // get id token
+    Log.d("UploadDocument", "Entered the api call method")
     var idToken: String? = null
-    user.getIdToken(true)
-        .addOnSuccessListener { result ->
-            idToken = result.token
-        }
+    val idTokenResult = user.getIdToken(true).await()
+    idToken = idTokenResult.token
+    if (idToken == null) {
+        Log.e("UploadDocument", "Failed to get ID token")
+        return
+    }
+    Log.d("UploadDocument", "user name: {$user.displayName}")
+    Log.d("UploadDocument", " id token: {$idToken}")
     val inputStream = context.contentResolver.openInputStream(filePath) ?: return
     val bytes = inputStream.readBytes()
+    val base64File = Base64.encodeToString(bytes, Base64.NO_WRAP)
     inputStream.close()
     val fileName = filePath.lastPathSegment ?: "document.pdf"
-    val requestBody = MultipartBody.Builder()
-        .setType(MultipartBody.FORM)
-        .addFormDataPart("login_token", idToken.toString())
-        .addFormDataPart(
-            "file", fileName,
-            bytes.toRequestBody("application/octet-stream".toMediaTypeOrNull())
-        )
+    Log.d("UploadDocument", " file name: {$fileName}")
+    Log.d("UploadDocument", " bytes: {$bytes}")
+    val jsonRequest = """
+        {
+            "login_token": "$idToken",
+            "file_name:": "$fileName",
+            "file": "$base64File"
+        }
+    """.trimIndent()
+    val requestBody = jsonRequest.toRequestBody("application/json".toMediaTypeOrNull())
+    Log.d("UploadDocument", " request body: $jsonRequest")
+    val request = Request.Builder()
+        // Not sure how we want to handle the url part right now
+        .url("http://172.20.10.2:5001/generate_flashcards")
+        .post(requestBody)
+        .addHeader("Content-Type", "application/json")
         .build()
 
-    val request = Request.Builder()
-        .url("http://10.102.170.11:5000/generate_flashcards")
-        .post(requestBody)
+    val client = OkHttpClient.Builder()
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
         .build()
-    val client = OkHttpClient()
     withContext(Dispatchers.IO) {
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
@@ -646,3 +666,5 @@ suspend fun UploadDocumentToLLM(user: FirebaseUser, context: Context, filePath: 
         }
     }
 }
+// TODO: Modify the LLm function to return the cards
+// TODO: Make a new deck using the function above

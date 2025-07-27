@@ -1,6 +1,7 @@
 package com.example.studyio.ui.screens
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -31,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.auth.AuthViewModel
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +57,10 @@ fun HomeScreen(
     var selectedDeck by remember { mutableStateOf<Deck?>(null) }
     val homeViewModel: HomeViewModel = hiltViewModel()
     var showUserInfo by remember { mutableStateOf(false) }
+    var shareDeckEmailPrompt by remember { mutableStateOf(false) }
+    var emailToShare by remember { mutableStateOf("") }
+    var selectedDeckForShare by remember { mutableStateOf<Deck?>(null) }
+    val context = LocalContext.current
     
     val authViewModel: AuthViewModel = hiltViewModel()
     val user by authViewModel.currentUser.collectAsState()
@@ -125,19 +131,6 @@ fun HomeScreen(
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)) {
-//            Button(
-//                onClick = {
-//                    if (user == null) {
-//                        onNavigateToAuth()
-//                    } else {
-//                        showUserInfo = true
-//                    }
-//                },
-//                modifier = Modifier.padding(16.dp)
-//            ) {
-//                Text(if (user == null) "Test Auth" else "Show User Info")
-//            }
-            
 
             if (user != null) {
                 Row(
@@ -249,19 +242,29 @@ fun HomeScreen(
                 title = { Text("Update Deck") },
                 text = { Text("Update the deck '${deck.name}'?") },
                 confirmButton = {
-                    TextButton(onClick = {
-                        val updatedDeck = deck.copy(isPublic = !deck.isPublic)
-                        homeViewModel.updateDeck(updatedDeck)
-//                        onDeleteDeck(deck)
-                        selectedDeck = null
-                    }) {
-                        Text(if (deck.isPublic) "Make Private" else "Make Public")
+                    Column {
+                        TextButton(onClick = {
+                            val updatedDeck = deck.copy(isPublic = !deck.isPublic)
+                            homeViewModel.updateDeck(updatedDeck)
+                            selectedDeck = null
+                        }) {
+                            Text(if (deck.isPublic) "Make Private" else "Make Public")
+                        }
+                        TextButton(onClick = {
+                            if (user == null) {
+                                Toast.makeText(context, "You must be signed in to share a deck.", Toast.LENGTH_SHORT).show()
+                                onNavigateToAuth()
+                            } else {
+                                selectedDeckForShare = deck
+                                shareDeckEmailPrompt = true  // Show email prompt
+                                selectedDeck = null
+                            }
+                        }) {
+                            Text("Share")
+                        }
                     }
                 },
                 dismissButton = {
-//                    TextButton(onClick = { selectedDeck = null }) {
-//                        Text("Cancel")
-//                    }
                     Row {
                         TextButton(onClick = {
                             onDeleteDeck(deck)
@@ -273,6 +276,36 @@ fun HomeScreen(
                         TextButton(onClick = { selectedDeck = null }) {
                             Text("Cancel")
                         }
+                    }
+                }
+            )
+        }
+        if (shareDeckEmailPrompt && selectedDeckForShare != null) {
+            AlertDialog(
+                onDismissRequest = { shareDeckEmailPrompt = false },
+                title = { Text("Share Deck") },
+                text = {
+                    OutlinedTextField(
+                        value = emailToShare,
+                        onValueChange = { emailToShare = it },
+                        label = { Text("Enter recipient email") }
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        sendDeckByEmail(context, selectedDeckForShare!!, emailToShare)
+                        shareDeckEmailPrompt = false
+                        emailToShare = ""
+                    }) {
+                        Text("Send")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        shareDeckEmailPrompt = false
+                        emailToShare = ""
+                    }) {
+                        Text("Cancel")
                     }
                 }
             )

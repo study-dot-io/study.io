@@ -10,17 +10,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -35,23 +30,16 @@ import com.example.studyio.ui.auth.AuthViewModel
 @Composable
 fun HomeScreen(
     decks: List<Deck>,
-    dueCards: Int,
-    todayReviews: Int,
-    totalCards: Int,
-    totalDecks: Int,
     isImporting: Boolean = false,
     importMessage: String = "",
     onDeckClick: (Deck) -> Unit = {},
     onCreateDeck: () -> Unit = {},
-    onStudyNow: () -> Unit = {},
     onImportApkg: (() -> Unit)? = null,
     onStudyNowForDeck: (Deck) -> Unit = {},
     onDeleteDeck: (Deck) -> Unit = {},
-    onNavigateToAuth: () -> Unit = {},
     onSignOut: (() -> Unit)? = null,
 ) {
     var deckToDelete by remember { mutableStateOf<Deck?>(null) }
-    var showUserInfo by remember { mutableStateOf(false) }
     
     val authViewModel: AuthViewModel = hiltViewModel()
     val user by authViewModel.currentUser.collectAsState()
@@ -65,11 +53,6 @@ fun HomeScreen(
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
-                },
-                actions = {
-                    IconButton(onClick = { /* Settings */ }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
@@ -112,20 +95,6 @@ fun HomeScreen(
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)) {
-            Button(
-                onClick = {
-                    if (user == null) {
-                        onNavigateToAuth()
-                    } else {
-                        showUserInfo = true
-                    }
-                },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(if (user == null) "Test Auth" else "Show User Info")
-            }
-            
-
             if (user != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -147,43 +116,12 @@ fun HomeScreen(
                     }
                 }
             }
-            if (showUserInfo && user != null) {
-                AlertDialog(
-                    onDismissRequest = { showUserInfo = false },
-                    title = { Text("Signed In") },
-                    text = {
-                        Text("You are signed in as: ${user?.displayName ?: user?.email ?: user?.uid}")
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { showUserInfo = false }) {
-                            Text("OK")
-                        }
-                    }
-                )
-            }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    StudyNowCard(
-                        dueCards = dueCards,
-                        todayReviews = todayReviews,
-                        onStudyNow = onStudyNow
-                    )
-                }
-
-                item {
-                    QuickStatsCard(
-                        totalDecks = totalDecks,
-                        totalCards = totalCards
-                    )
-                }
-
                 // Import status card
                 if (isImporting) {
                     item {
@@ -323,142 +261,6 @@ fun ImportStatusCard(message: String) {
                 )
             }
         }
-    }
-}
-
-@Composable
-fun StudyNowCard(
-    dueCards: Int,
-    todayReviews: Int,
-    onStudyNow: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Study Now",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "$dueCards cards due",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
-                }
-
-                Button(
-                    onClick = onStudyNow,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Start")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                StatItem(
-                    icon = Icons.Default.AccessTime,
-                    value = todayReviews.toString(),
-                    label = "Today's Reviews"
-                )
-                StatItem(
-                    icon = Icons.Default.Star,
-                    value = "85%",
-                    label = "Success Rate"
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun QuickStatsCard(
-    totalDecks: Int,
-    totalCards: Int
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            StatItem(
-                icon = Icons.Default.Folder,
-                value = totalDecks.toString(),
-                label = "Decks"
-            )
-            StatItem(
-                icon = Icons.Default.Star,
-                value = totalCards.toString(),
-                label = "Total Cards"
-            )
-            StatItem(
-                icon = Icons.Default.AccessTime,
-                value = "12h",
-                label = "Study Time"
-            )
-        }
-    }
-}
-
-@Composable
-fun StatItem(
-    icon: ImageVector,
-    value: String,
-    label: String
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
     }
 }
 

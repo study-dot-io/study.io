@@ -31,7 +31,10 @@ fun QuizScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text("Quiz complete!", style = MaterialTheme.typography.headlineMedium)
-                Button(onClick = onQuizComplete, modifier = Modifier.padding(top = 24.dp)) {
+                Button(onClick = {
+                    viewModel.completeQuizSession()
+                    onQuizComplete()
+                }, modifier = Modifier.padding(top = 24.dp)) {
                     Text("Return Home")
                 }
             }
@@ -83,18 +86,22 @@ fun QuizScreen(
             ) {
                 ReviewButton("Again (1 day)", onClick = {
                     viewModel.rateCard(1)
+                    viewModel.insertQuizQuestion(cardId = card.id, rating = 1)
                     showBack = false
                 })
                 ReviewButton("Hard (2 days)", onClick = {
                     viewModel.rateCard(2)
+                    viewModel.insertQuizQuestion(cardId = card.id, rating = 2)
                     showBack = false
                 })
                 ReviewButton("Good (3 days)", onClick = {
                     viewModel.rateCard(3)
+                    viewModel.insertQuizQuestion(cardId = card.id, rating = 3)
                     showBack = false
                 })
                 ReviewButton("Easy (4 days)", onClick = {
                     viewModel.rateCard(4)
+                    viewModel.insertQuizQuestion(cardId = card.id, rating = 4)
                     showBack = false
                 })
             }

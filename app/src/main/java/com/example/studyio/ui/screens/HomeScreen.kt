@@ -71,7 +71,6 @@ fun HomeScreen(
     onDeleteDeck: (Deck) -> Unit = {},
     onNavigateToAuth: () -> Unit = {},
     onSignOut: (() -> Unit)? = null,
-    onNavigateToApiDemo: () -> Unit = {}
 ) {
     var deckToDelete by remember { mutableStateOf<Deck?>(null) }
     var showUserInfo by remember { mutableStateOf(false) }
@@ -147,18 +146,6 @@ fun HomeScreen(
             ) {
                 Text(if (user == null) "Test Auth" else "Show User Info")
             }
-            
-            // Temporary API Demo Button
-            Button(
-                onClick = onNavigateToApiDemo,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
-            ) {
-                Text("🚀  API Demo (Temporary)")
-            }
-            
             if (user != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

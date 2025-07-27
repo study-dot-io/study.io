@@ -20,6 +20,15 @@ import com.example.studyio.ui.screens.DeckDetailScreen
 import com.example.studyio.ui.screens.HomeScreen
 import com.example.studyio.ui.screens.QuizScreen
 import com.example.studyio.ui.demo.ApiDemoScreen
+import com.example.studyio.ui.screens.AnalyticsScreen
+import com.example.studyio.ui.screens.SocialScreen
+
+import com.example.studyio.ui.screens.BottomNavBar
+import com.example.studyio.ui.screens.bottomNavItems
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.ui.Modifier
 
 @Composable
 fun StudyIONavHost() {
@@ -47,77 +56,106 @@ fun StudyIONavHost() {
         }
     )
 
-    NavHost(navController = navController, startDestination = "home") {
-        composable("home") {
-            HomeScreen(
-                decks = decks,
-                dueCards = 0, // TODO: wire up real values
-                todayReviews = 0,
-                totalCards = 0,
-                totalDecks = decks.size,
-                isImporting = isImporting,
-                importMessage = importMessage,
-                onDeckClick = { deck -> navController.navigate("decks/${deck.id}") },
-                onCreateDeck = { navController.navigate("decks/create") },
-                onStudyNow = {
-                    val firstDeckId = decks.firstOrNull()?.id
-                    if (firstDeckId != null) navController.navigate("quiz/decks/${firstDeckId}")
-                },
-                onImportApkg = { importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
-                onStudyNowForDeck = { deck -> navController.navigate("quiz/decks/${deck.id}") },
-                onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) },
-                onNavigateToAuth = { navController.navigate("auth") },
-                onNavigateToApiDemo = { navController.navigate("apiDemo") }
-            )
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val showBottomBar = currentRoute in bottomNavItems.map { it.route }
+
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) BottomNavBar(navController)
         }
-        composable("decks/create") {
-            CreateDeckScreen(
-                onBackPressed = {
-                    navController.popBackStack()
-                },
-                onDeckCreated = { newDeck ->
-                    homeViewModel.createDeck(newDeck) { navController.popBackStack() }
-                }
-            )
-        }
-        composable("decks/{id}") { backStackEntry ->
-            val deckId = backStackEntry.arguments?.getString("id") ?: return@composable
-            DeckDetailScreen(
-                deckId = deckId,
-                onBack = { navController.popBackStack() },
-                onCreateCardPressed = { navController.navigate("decks/$deckId/createCard") }
-            )
-        }
-        composable("decks/{deckId}/createCard") { backStackEntry ->
-            val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
-            CardCreateScreen(
-                deckId = deckId,
-                onDeckSelected = { newDeckId ->
-                    // We want to navigate back to the selected deck's detail screen
-                    navController.popBackStack("decks/${deckId}", inclusive = true)
-                    navController.navigate("decks/$newDeckId")
-                    navController.navigate("decks/$newDeckId/createCard")
-                },
-                onBackPressed = { navController.popBackStack() },
-                onCreatePressed = { navController.popBackStack() }
-            )
-        }
-        composable("quiz/decks/{deckId}") { backStackEntry ->
-            val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
-            QuizScreen(
-                deckId = deckId,
-                onQuizComplete = { navController.popBackStack("home", inclusive = false) }
-            )
-        }
-        composable("auth") {
-            AuthScreen(
-                onAuthSuccess = { navController.popBackStack() }
-            )
-        }
-        composable("apiDemo") {
-            ApiDemoScreen(
-                onBack = { navController.popBackStack() }
-            )
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable("home") {
+                HomeScreen(
+                    decks = decks,
+                    dueCards = 0, // TODO: wire up real values
+                    todayReviews = 0,
+                    totalCards = 0,
+                    totalDecks = decks.size,
+                    isImporting = isImporting,
+                    importMessage = importMessage,
+                    onDeckClick = { deck -> navController.navigate("decks/${deck.id}") },
+                    onCreateDeck = { navController.navigate("decks/create") },
+                    onStudyNow = {
+                        val firstDeckId = decks.firstOrNull()?.id
+                        if (firstDeckId != null) navController.navigate("quiz/decks/${firstDeckId}")
+                    },
+                    onImportApkg = { importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
+                    onStudyNowForDeck = { deck -> navController.navigate("quiz/decks/${deck.id}") },
+                    onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) },
+                    onNavigateToAuth = { navController.navigate("auth") },
+                )
+            }
+
+            composable("decks/create") {
+                CreateDeckScreen(
+                    onBackPressed = {
+                        navController.popBackStack()
+                    },
+                    onDeckCreated = { newDeck ->
+                        homeViewModel.createDeck(newDeck) { navController.popBackStack() }
+                    }
+                )
+            }
+
+            composable("decks/{id}") { backStackEntry ->
+                val deckId = backStackEntry.arguments?.getString("id") ?: return@composable
+                DeckDetailScreen(
+                    deckId = deckId,
+                    onBack = { navController.popBackStack() },
+                    onCreateCardPressed = { navController.navigate("decks/$deckId/createCard") }
+                )
+            }
+
+            composable("decks/{deckId}/createCard") { backStackEntry ->
+                val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
+                CardCreateScreen(
+                    deckId = deckId,
+                    onDeckSelected = { newDeckId ->
+                        navController.popBackStack("decks/$deckId", inclusive = true)
+                        navController.navigate("decks/$newDeckId")
+                        navController.navigate("decks/$newDeckId/createCard")
+                    },
+                    onBackPressed = { navController.popBackStack() },
+                    onCreatePressed = { navController.popBackStack() }
+                )
+            }
+
+            composable("quiz/decks/{deckId}") { backStackEntry ->
+                val deckId = backStackEntry.arguments?.getString("deckId") ?: return@composable
+                QuizScreen(
+                    deckId = deckId,
+                    onQuizComplete = { navController.popBackStack("home", inclusive = false) }
+                )
+            }
+
+            composable("auth") {
+                AuthScreen(
+                    onAuthSuccess = { navController.popBackStack() }
+                )
+            }
+
+            composable("apiDemo") {
+                ApiDemoScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("social") {
+                SocialScreen()
+            }
+
+            composable("analytics") {
+                AnalyticsScreen(
+                    onDeckSelected = { deckId: String ->
+                        navController.navigate("decks/$deckId")
+                    }
+                )
+            }
         }
     }
 }

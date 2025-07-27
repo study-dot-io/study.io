@@ -71,3 +71,53 @@ class Converters {
         return CardType.entries.toTypedArray().getOrElse(type) { CardType.NEW }
     }
 }
+
+@Entity(
+    tableName = "quiz_sessions",
+    indices = [Index(value = ["deckId"])],
+    foreignKeys = [
+        ForeignKey(
+            entity = Deck::class,
+            parentColumns = ["id"],
+            childColumns = ["deckId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class QuizSession(
+    @PrimaryKey
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val deckId: String,
+    val startedAt: Long = System.currentTimeMillis() / 1000,
+    val completedAt: Long? = null // Nullable to indicate ongoing sessions
+)
+
+@Entity(
+    tableName = "quiz_questions",
+    indices = [
+        Index(value = ["sessionId"]),
+        Index(value = ["cardId"])
+    ],
+    foreignKeys = [
+        ForeignKey(
+            entity = QuizSession::class,
+            parentColumns = ["id"],
+            childColumns = ["sessionId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Card::class,
+            parentColumns = ["id"],
+            childColumns = ["cardId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class QuizQuestion(
+    @PrimaryKey
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val sessionId: String,
+    val cardId: String,
+    val rating: Int, // Rating given to the card during the quiz
+    val reviewedAt: Long = System.currentTimeMillis() / 1000
+)

@@ -1,4 +1,4 @@
-package com.example.studyio.util
+package com.example.studyio.utils
 
 import android.content.Context
 import android.net.Uri

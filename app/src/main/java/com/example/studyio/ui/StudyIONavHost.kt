@@ -35,7 +35,6 @@ fun StudyIONavHost() {
     val navController = rememberNavController()
     val homeViewModel: HomeViewModel = hiltViewModel()
     val importViewModel: ImportViewModel = hiltViewModel()
-    val decks by homeViewModel.decks.collectAsState()
     val isImporting by importViewModel.isImporting.collectAsState()
     val importMessage by importViewModel.importMessage.collectAsState()
 
@@ -70,7 +69,6 @@ fun StudyIONavHost() {
         ) {
             composable("home") {
                 HomeScreen(
-                    decks = decks,
                     isImporting = isImporting,
                     importMessage = importMessage,
                     onDeckClick = { deck -> navController.navigate("decks/${deck.id}") },

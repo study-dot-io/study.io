@@ -10,14 +10,26 @@ import androidx.room.Update
 
 @Dao
 interface DeckDao {
-    @Query("SELECT * FROM decks")
+    @Query("SELECT * FROM decks WHERE state != 2") // Not DELETED
     suspend fun getAllDecks(): List<Deck>
+    
+    @Query("SELECT * FROM decks WHERE state = 0") // ACTIVE
+    suspend fun getActiveDecks(): List<Deck>
+    
+    @Query("SELECT * FROM decks WHERE state = 1") // ARCHIVED
+    suspend fun getArchivedDecks(): List<Deck>
+    
+    @Query("SELECT * FROM decks WHERE id = :deckId AND state != 2") // Not DELETED
+    suspend fun getDeckById(deckId: String): Deck?
 
     @Insert
     suspend fun insertDeck(deck: Deck)
 
+    @Update
+    suspend fun updateDeck(deck: Deck)
+
     @Query("DELETE FROM decks WHERE id = :deckId")
-    suspend fun deleteDeck(deckId: String)
+    suspend fun hardDeleteDeck(deckId: String)
     
     @Query("SELECT COUNT(*) FROM cards WHERE deckId = :deckId AND due <= strftime('%s', 'now')")
     suspend fun getDueCardsCount(deckId: String): Int

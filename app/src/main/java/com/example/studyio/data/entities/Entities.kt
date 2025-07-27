@@ -6,6 +6,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 
+enum class DeckState {
+    ACTIVE, ARCHIVED, DELETED
+}
+
 /**
  * Deck entity representing a collection of flashcards.
  * @param id Unique deck ID (matches Anki deck ID if imported)
@@ -17,9 +21,13 @@ import androidx.room.TypeConverter
 data class Deck(
     @PrimaryKey
     val id: String = java.util.UUID.randomUUID().toString(),
-    val name: String,
-    val description: String? = null,
-    val color: String = "#6366F1" // Default primary color
+    var name: String,
+    var description: String? = null,
+    var color: String = "#FFFFFF",
+    var state: DeckState = DeckState.ACTIVE,
+    var studySchedule: Int = 0, // Bitmask for days of the week
+    var lastStudiedDate: Long? = null, // Timestamp of last completed study session
+    var streak: Int = 0
 )
 
 enum class CardType {
@@ -69,6 +77,16 @@ class Converters {
     @TypeConverter
     fun toCardType(type: Int): CardType {
         return CardType.entries.toTypedArray().getOrElse(type) { CardType.NEW }
+    }
+    
+    @TypeConverter
+    fun fromDeckState(state: DeckState): Int {
+        return state.ordinal
+    }
+    
+    @TypeConverter
+    fun toDeckState(state: Int): DeckState {
+        return DeckState.entries.toTypedArray().getOrElse(state) { DeckState.ACTIVE }
     }
 }
 

@@ -6,9 +6,25 @@ import javax.inject.Singleton
 @Singleton
 class DeckRepository @Inject constructor(private val deckDao: DeckDao) {
     suspend fun getAllDecks(): List<Deck> = deckDao.getAllDecks()
+    suspend fun getActiveDecks(): List<Deck> = deckDao.getActiveDecks()
+    suspend fun getArchivedDecks(): List<Deck> = deckDao.getArchivedDecks()
+    suspend fun getDeckById(deckId: String): Deck? = deckDao.getDeckById(deckId)
     suspend fun insertDeck(deck: Deck) = deckDao.insertDeck(deck)
-    suspend fun deleteDeck(deckId: String) = deckDao.deleteDeck(deckId)
+    suspend fun updateDeck(deck: Deck) = deckDao.updateDeck(deck)
+    suspend fun hardDeleteDeck(deckId: String) = deckDao.hardDeleteDeck(deckId)
+    suspend fun softDeleteDeck(deckId: String) {
+        getDeckById(deckId)?.let { deck ->
+            val updatedDeck = deck.copy(state = DeckState.DELETED)
+            updateDeck(updatedDeck)
+        }
+    }
     suspend fun getDueCardsCount(deckId: String): Int = deckDao.getDueCardsCount(deckId)
+    suspend fun toggleDeckArchiveStatus(deckId: String) {
+        getDeckById(deckId)?.let { deck ->
+            val updatedDeck = deck.copy(state = if (deck.state == DeckState.ACTIVE) DeckState.ARCHIVED else DeckState.ACTIVE)
+            updateDeck(updatedDeck)
+        }
+    }
 }
 
 @Singleton

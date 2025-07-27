@@ -6,6 +6,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,6 +22,7 @@ import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.data.entities.Deck
 import com.example.studyio.ui.home.HomeViewModel
+import com.example.studyio.utils.StudyScheduleUtils
 
 @Composable
 fun DeckCard(
@@ -32,10 +34,21 @@ fun DeckCard(
     val viewModel: HomeViewModel = hiltViewModel()
     
     val cardCountMap by viewModel.cardCountMap.collectAsState()
+    val isScheduledToday = StudyScheduleUtils.isScheduledToday(deck.studySchedule)
+    val dueCardsCount = cardCountMap[deck.id] ?: 0
+    val hasCompletedToday = deck.lastStudiedDate?.let {
+        val dayInSeconds = 24 * 60 * 60
+        val currentTime = System.currentTimeMillis() / 1000
+        (currentTime - it) < dayInSeconds
+    } ?: false
 
     Card(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -44,11 +57,7 @@ fun DeckCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongPress
-                ),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Color indicator
@@ -59,17 +68,40 @@ fun DeckCard(
                     .background(Color(deck.color.toColorInt()))
             )
             Spacer(modifier = Modifier.width(16.dp))
-            // Deck info (clickable for deck details)
+            // Deck info
             Column(
                 modifier = Modifier
                     .weight(1f)
             ) {
-                Text(
-                    text = deck.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = deck.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    // Add streak indicator with fire icon if streak > 0
+                    if (deck.streak > 0) {
+                        Icon(
+                            imageVector = Icons.Default.LocalFireDepartment,
+                            contentDescription = "Streak",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${deck.streak}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                
                 deck.description?.let {
                     Text(
                         text = it,
@@ -77,13 +109,39 @@ fun DeckCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Text(
-                    text = "Due Cards: ${cardCountMap[deck.id] ?: 0}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                )
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Text(
+                        text = "Due Cards: $dueCardsCount",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    )
+                    
+                    // Add status indicator
+                    if (isScheduledToday) {
+                        Text(
+                            text = " • Due Today",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (hasCompletedToday) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.error
+                        )
+                    }
+                    
+                    if (hasCompletedToday) {
+                        Text(
+                            text = " • Completed",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
-            IconButton(onClick = onReview, enabled = (cardCountMap[deck.id] ?: 0) > 0) {
+            IconButton(onClick = onReview, enabled = dueCardsCount > 0) {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Review")
             }
         }

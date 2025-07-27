@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,16 +17,16 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.data.entities.Deck
 import com.example.studyio.ui.auth.AuthViewModel
+import com.example.studyio.ui.home.DeckTab
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.screens.components.DeckCard
-import com.example.studyio.ui.screens.components.DeleteDeckDialog
+import com.example.studyio.ui.screens.components.DeckManagementModal
 import com.example.studyio.ui.screens.components.ImportLoadingDialog
 import com.example.studyio.ui.screens.components.ImportStatusCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    decks: List<Deck>,
     isImporting: Boolean = false,
     importMessage: String = "",
     onDeckClick: (Deck) -> Unit = {},
@@ -35,25 +36,43 @@ fun HomeScreen(
     onDeleteDeck: (Deck) -> Unit = {},
     onSignOut: (() -> Unit)? = null,
 ) {
-    var deckToDelete by remember { mutableStateOf<Deck?>(null) }
+    var deckToManage by remember { mutableStateOf<Deck?>(null) }
     
     val authViewModel: AuthViewModel = hiltViewModel()
+    val homeViewModel: HomeViewModel = hiltViewModel()
     val user by authViewModel.currentUser.collectAsState()
+    val activeDecks by homeViewModel.activeDecks.collectAsState()
+    val archivedDecks by homeViewModel.archivedDecks.collectAsState()
+    val selectedTab by homeViewModel.selectedTab.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "StudyIO",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+            TabRow(
+                selectedTabIndex = selectedTab.ordinal,
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
+                Tab(
+                    selected = selectedTab == DeckTab.ACTIVE,
+                    onClick = { homeViewModel.setSelectedTab(DeckTab.ACTIVE) },
+                    text = { Text("Active Decks") }
                 )
-            )
+                Tab(
+                    selected = selectedTab == DeckTab.ARCHIVED,
+                    onClick = { homeViewModel.setSelectedTab(DeckTab.ARCHIVED) },
+                    text = { 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Archive,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Archived")
+                        }
+                    }
+                )
+            }
         },
         floatingActionButton = {
             var fabExpanded by remember { mutableStateOf(false) }
@@ -91,27 +110,12 @@ fun HomeScreen(
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)) {
-            if (user != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                ) {
-                    Text(
-                        text = "👋 Welcome, ${user?.displayName ?: user?.email ?: "User"}!",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Button(
-                        onClick = {
-                            authViewModel.signOut()
-                            if (onSignOut != null) onSignOut()
-                        },
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        Text("Sign Out")
-                    }
-                }
-            }
+            val decksToShow = if (selectedTab == DeckTab.ACTIVE) activeDecks else archivedDecks
+            val emptyMessage = if (selectedTab == DeckTab.ACTIVE) 
+                "You don't have any active decks yet. Create one to get started!" 
+            else 
+                "You don't have any archived decks."
+            
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -129,18 +133,44 @@ fun HomeScreen(
 
                 item {
                     Text(
-                        text = "Your Decks",
+                        text = if (selectedTab == DeckTab.ACTIVE) "Your Decks" else "Archived Decks",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
                     )
                 }
+                
+                // Show message if no decks in this tab
+                if (decksToShow.isEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp)
+                            ) {
+                                Text(
+                                    text = emptyMessage,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
 
-                items(decks) { deck ->
+                items(decksToShow) { deck ->
                     DeckCard(
                         deck = deck,
                         onClick = { onDeckClick(deck) },
                         onReview = { onStudyNowForDeck(deck) },
-                        onLongPress = { deckToDelete = deck }
+                        onLongPress = { deckToManage = deck }
                     )
                 }
 
@@ -163,15 +193,23 @@ fun HomeScreen(
             }
         }
 
-        // Delete deck confirmation dialog
-        deckToDelete?.let { deck ->
-            DeleteDeckDialog(
+        // Deck management dialog
+        deckToManage?.let { deck ->
+            DeckManagementModal(
                 deck = deck,
-                onConfirm = {
-                    onDeleteDeck(deck)
-                    deckToDelete = null
+                onDismiss = { deckToManage = null },
+                onArchive = {
+                    homeViewModel.toggleDeckArchiveStatus(deck)
+                    deckToManage = null
                 },
-                onDismiss = { deckToDelete = null }
+                onDelete = {
+                    onDeleteDeck(deck)
+                    deckToManage = null
+                },
+                onUpdateSchedule = { schedule ->
+                    homeViewModel.updateDeckSchedule(deck.id, schedule)
+                    deckToManage = null
+                }
             )
         }
     }

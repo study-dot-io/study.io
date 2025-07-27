@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.entities.Deck
 import com.example.studyio.data.entities.DeckRepository
+import com.example.studyio.data.entities.DeckState
 import com.example.studyio.events.Events
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,10 +17,15 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val deckRepository: DeckRepository
 ) : ViewModel() {
-    private val _decks = MutableStateFlow<List<Deck>>(emptyList())
+    private val _activeDecks = MutableStateFlow<List<Deck>>(emptyList())
+    private val _archivedDecks = MutableStateFlow<List<Deck>>(emptyList())
     private val _cardCountMap = MutableStateFlow<Map<String, Int>>(emptyMap())
-    val decks: StateFlow<List<Deck>> = _decks
+    private val _selectedTab = MutableStateFlow(DeckTab.ACTIVE)
+    
+    val activeDecks: StateFlow<List<Deck>> = _activeDecks
+    val archivedDecks: StateFlow<List<Deck>> = _archivedDecks
     val cardCountMap: StateFlow<Map<String, Int>> = _cardCountMap
+    val selectedTab: StateFlow<DeckTab> = _selectedTab
 
     init {
         loadDecks()
@@ -30,33 +36,67 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun loadDecks() {
+    fun setSelectedTab(tab: DeckTab) {
+        _selectedTab.value = tab
+    }
+
+    private fun fetchCardCounts() {
         viewModelScope.launch {
-            _decks.value = deckRepository.getAllDecks()
-            // Fetch card counts to enhance the deck information; TODO: make this more efficient if this becomes a bottleneck
+            val allVisibleDecks = _activeDecks.value + _archivedDecks.value
             val deckCounts = mutableMapOf<String, Int>()
-            _decks.value.forEach { deck ->
+            allVisibleDecks.forEach { deck ->
                 val count = deckRepository.getDueCardsCount(deck.id)
                 deckCounts[deck.id] = count
             }
-            
             _cardCountMap.value = deckCounts
+        }
+    }
+
+    fun loadDecks() {
+        viewModelScope.launch {
+            _activeDecks.value = deckRepository.getActiveDecks()
+            _archivedDecks.value = deckRepository.getArchivedDecks()
+            fetchCardCounts()
         }
     }
 
     fun createDeck(deck: Deck, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
             deckRepository.insertDeck(deck)
-            loadDecks()
+            Events.decksUpdated()
             onComplete?.invoke()
         }
     }
 
     fun deleteDeck(deckId: String, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
-            deckRepository.deleteDeck(deckId)
+            deckRepository.softDeleteDeck(deckId)
             loadDecks()
+            Events.decksUpdated()
             onComplete?.invoke()
         }
     }
+
+    fun toggleDeckArchiveStatus(deck: Deck) {
+        viewModelScope.launch {
+            deckRepository.toggleDeckArchiveStatus(deck.id)
+            loadDecks()
+            Events.decksUpdated()
+        }
+    }
+
+    fun updateDeckSchedule(deckId: String, schedule: Int) {
+        viewModelScope.launch {
+            deckRepository.getDeckById(deckId)?.let { deck ->
+                val updatedDeck = deck.copy(studySchedule = schedule)
+                deckRepository.updateDeck(updatedDeck)
+                loadDecks()
+                Events.decksUpdated()
+            }
+        }
+    }
+}
+
+enum class DeckTab {
+    ACTIVE, ARCHIVED
 }

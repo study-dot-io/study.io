@@ -290,7 +290,9 @@ fun HomeScreen(
                             if (user == null) {
                                 Toast.makeText(context, "You must be signed in to share a deck.", Toast.LENGTH_SHORT).show()
                                 onNavigateToAuth()
-                            } else {
+                            } else if (!deck.isPublic) {
+                                Toast.makeText(context, "The deck must be public to be shared.", Toast.LENGTH_SHORT).show()
+                            }else {
                                 selectedDeckForShare = deck
                                 shareDeckEmailPrompt = true  // Show email prompt
                                 selectedDeck = null

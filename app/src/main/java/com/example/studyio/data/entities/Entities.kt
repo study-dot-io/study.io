@@ -19,7 +19,8 @@ data class Deck(
     val id: String = java.util.UUID.randomUUID().toString(),
     val name: String,
     val description: String? = null,
-    val color: String = "#6366F1" // Default primary color
+    val color: String = "#6366F1", // Default primary color
+    val isPublic: Boolean = true
 )
 
 enum class CardType {

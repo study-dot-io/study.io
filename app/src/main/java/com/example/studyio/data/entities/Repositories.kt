@@ -9,6 +9,7 @@ class DeckRepository @Inject constructor(private val deckDao: DeckDao) {
     suspend fun insertDeck(deck: Deck) = deckDao.insertDeck(deck)
     suspend fun deleteDeck(deckId: String) = deckDao.deleteDeck(deckId)
     suspend fun getDueCardsCount(deckId: String): Int = deckDao.getDueCardsCount(deckId)
+    suspend fun updateDeck(deck: Deck) = deckDao.updateDeck(deck)
 }
 
 @Singleton

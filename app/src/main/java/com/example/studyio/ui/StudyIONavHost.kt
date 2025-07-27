@@ -21,6 +21,7 @@ import com.example.studyio.ui.screens.HomeScreen
 import com.example.studyio.ui.screens.QuizScreen
 import com.example.studyio.ui.demo.ApiDemoScreen
 import com.example.studyio.ui.screens.AnalyticsScreen
+import com.example.studyio.ui.screens.SocialScreen
 
 import com.example.studyio.ui.screens.BottomNavBar
 import com.example.studyio.ui.screens.bottomNavItems
@@ -145,7 +146,7 @@ fun StudyIONavHost() {
             }
 
             composable("social") {
-                androidx.compose.material3.Text("Social screen coming soon")
+                SocialScreen()
             }
 
             composable("analytics") {

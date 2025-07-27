@@ -107,7 +107,7 @@ data class ReviewHeatmapData(
     val reviewCount: Int
 )
 
-@Database(entities = [Deck::class, Card::class, QuizSession::class, QuizQuestion::class], version = 2)
+@Database(entities = [Deck::class, Card::class, QuizSession::class, QuizQuestion::class], version = 1)
 @TypeConverters(Converters::class)
 abstract class StudyioDatabase : RoomDatabase() {
     abstract fun deckDao(): DeckDao

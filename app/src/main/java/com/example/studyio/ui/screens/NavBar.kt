@@ -17,7 +17,6 @@ data class BottomNavItem(val route: String, val icon: ImageVector, val label: St
 val bottomNavItems = listOf(
     BottomNavItem("home", Icons.Default.Home, "Home"),
     BottomNavItem("social", Icons.Default.Group, "Social"),
-    BottomNavItem("apiDemo", Icons.Default.Code, "API"),
     BottomNavItem("analytics", Icons.Default.Person, "Analytics"),
 )
 
@@ -27,9 +26,6 @@ fun BottomNavBar(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     NavigationBar {
-//        val navBackStackEntry by navController.currentBackStackEntryAsState()
-//        val currentRoute = navBackStackEntry?.destination?.route
-
         bottomNavItems.forEach { item ->
             NavigationBarItem(
                 icon = { Icon(item.icon, contentDescription = item.label) },

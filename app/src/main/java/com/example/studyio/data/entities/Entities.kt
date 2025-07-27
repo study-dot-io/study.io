@@ -27,7 +27,8 @@ data class Deck(
     var state: DeckState = DeckState.ACTIVE,
     var studySchedule: Int = 0, // Bitmask for days of the week
     var lastStudiedDate: Long? = null, // Timestamp of last completed study session
-    var streak: Int = 0
+    var streak: Int = 0,
+    var isPublic: Boolean = true
 )
 
 enum class CardType {

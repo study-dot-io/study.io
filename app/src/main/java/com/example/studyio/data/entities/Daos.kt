@@ -33,6 +33,9 @@ interface DeckDao {
     
     @Query("SELECT COUNT(*) FROM cards WHERE deckId = :deckId AND due <= strftime('%s', 'now')")
     suspend fun getDueCardsCount(deckId: String): Int
+
+    @Update
+    suspend fun updateDeck(deck: Deck)
 }
 
 @Dao

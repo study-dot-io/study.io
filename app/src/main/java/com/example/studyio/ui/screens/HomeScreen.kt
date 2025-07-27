@@ -1,6 +1,10 @@
 package com.example.studyio.ui.screens
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -22,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -29,10 +34,27 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.studyio.data.entities.Deck
 import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.auth.AuthViewModel
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.platform.LocalContext
+import com.firebase.ui.auth.data.model.User
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.Request
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.coroutines.tasks.await
+import android.util.Base64
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,7 +153,18 @@ fun HomeScreen(
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)) {
-
+            Button(
+                onClick = {
+                    if (user == null) {
+                        onNavigateToAuth()
+                    } else {
+                        showUserInfo = true
+                    }
+                },
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(if (user == null) "Test Auth" else "Show User Info")
+            }
             if (user != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -218,6 +251,9 @@ fun HomeScreen(
 
                 item {
                     Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
+                }
+                item{
+                    GetDocumentFromUser(user)
                 }
             }
         }
@@ -311,6 +347,7 @@ fun HomeScreen(
             )
         }
     }
+
 }
 
 @Composable
@@ -604,4 +641,167 @@ fun DeckCard(
             }
         }
     }
+}
+
+// Upload to LLM feature
+@Composable
+fun GetDocumentFromUser(user: FirebaseUser? = null) {
+    // GEt context -> required for all file ops
+    Log.d("GetDocument", "Entered the get document function")
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var fileName by remember {mutableStateOf<String?>(null)}
+    var filePath by remember {mutableStateOf<Uri?>(null)}
+    var llmResult by remember { mutableStateOf<Map<String, Any>?>(null) }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        filePath = uri
+        fileName = uri?.lastPathSegment
+    }
+
+        Column(
+            modifier = Modifier.padding(10.dp)
+        ) {
+
+            Button(onClick = { launcher.launch("*/*") }) {
+                Text("Upload Document")
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            fileName?.let {
+                Text(text = "Selected File: $it")
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Button(
+                onClick = {
+                    if (filePath != null && user != null) {
+                        Log.d("GetDocument", "Should call the llm function")
+                        scope.launch {
+                                llmResult = UploadDocumentToLLM(user,context, filePath!!)
+                        }
+                    }
+                },
+                enabled = filePath != null
+            ){
+                Text("Upload")
+            }
+            llmResult?.let { CreateLLMDeckAndCard(it) }
+
+        }
+}
+
+suspend fun UploadDocumentToLLM(
+    user: FirebaseUser,
+    context: Context,
+    filePath: Uri
+): Map<String, Any>? {
+    val idTokenResult = user.getIdToken(true).await()
+    val idToken = idTokenResult.token
+    if (idToken == null) {
+        Log.e("UploadDocument", "Failed to get ID token")
+        return null
+    }
+
+    Log.d("UploadDocument", "user name: ${user.displayName}")
+    Log.d("UploadDocument", "id token: $idToken")
+    val inputStream = context.contentResolver.openInputStream(filePath) ?: return null
+    val bytes = inputStream.readBytes()
+    inputStream.close()
+    val base64File = Base64.encodeToString(bytes, Base64.NO_WRAP)
+    val fileName = filePath.lastPathSegment ?: "document.pdf"
+
+    Log.d("UploadDocument", "file name: $fileName")
+    Log.d("UploadDocument", "bytes length: ${bytes.size}")
+    val jsonRequest = """
+        {
+            "login_token": "$idToken",
+            "file_name": "$fileName",
+            "file": "$base64File"
+        }
+    """.trimIndent()
+
+    Log.d("UploadDocument", "request body: $jsonRequest")
+
+    val requestBody = jsonRequest.toRequestBody("application/json".toMediaTypeOrNull())
+
+    val request = Request.Builder()
+        .url("http://172.20.10.2:5001/generate_flashcards")
+        .post(requestBody)
+        .addHeader("Content-Type", "application/json")
+        .build()
+
+    val client = OkHttpClient.Builder()
+        .connectTimeout(120, TimeUnit.SECONDS)
+        .writeTimeout(120, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)
+        .build()
+
+    val result = mutableMapOf<String, Any>()
+
+    withContext(Dispatchers.IO) {
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                Log.e("Upload", "Failed: ${response.code}")
+            } else {
+                val responseBody = response.body?.string()
+                Log.d("Upload", "Success: $responseBody")
+
+                val jsonArray = JSONArray(responseBody)
+                val jsonObj = jsonArray.getJSONObject(0)
+                val jsonCardsArray: JSONArray = jsonObj.getJSONArray("cards")
+                val jsonDeckObj = jsonObj.getJSONObject("deck")
+                val deckMap = mutableMapOf<String, Any>()
+                deckMap["id"] = jsonDeckObj.getString("id")
+                deckMap["name"] = jsonDeckObj.getString("name")
+                deckMap["createdAt"] = jsonDeckObj.getString("createdAt")
+                result["deck"] = deckMap
+
+                val cardsList = mutableListOf<Map<String, Any>>()
+
+                for (i in 0 until jsonCardsArray.length()) {
+                    val cardObj = jsonCardsArray.getJSONObject(i)
+                    val cardMap = mutableMapOf<String, Any>()
+                    cardMap["front"] = cardObj.getString("front")
+                    cardMap["back"] = cardObj.getString("back")
+                    cardsList.add(cardMap)
+                }
+                result["cards"] = cardsList
+
+            }
+        }
+    }
+
+    return result
+}
+
+@Composable
+fun CreateLLMDeckAndCard(llmResponse:Map<String, Any>) {
+    Log.d("CreateLLMDeckAndCard", "Entered the CreateLLMDeckAndCard function")
+    val homeViewModel: HomeViewModel = hiltViewModel()
+    Log.d("CreateLLMDeckAndCard", "LLm response: ${llmResponse}")
+    val deckObj = llmResponse["deck"] as? Map<String, Any> ?: return
+    val deckId = deckObj["id"]?.toString() ?: return
+    Log.d("CreateLLMDeckAndCard", "LLm response: ${deckId}")
+    val newDeck = Deck(
+        id = deckId,
+        name = deckObj["name"]?.toString() ?: "",
+        description = "",
+        color = "#6366F1"
+    )
+    homeViewModel.createDeck(newDeck)
+    val cardList = llmResponse["cards"] as? List<Map<String, Any>> ?: return
+    val cardCreateViewModel: CardCreateViewModel = hiltViewModel()
+    for (i in 0 until cardList.size) {
+        val cardObj = cardList[i]
+        val front = cardObj["front"] as? String ?: ""
+        val back = cardObj["back"] as? String ?: ""
+        val tags = ""
+        cardCreateViewModel.createCard(deckId = deckId, front = front, back= back, tags = tags, onDone = {})
+
+    }
+    Log.d("CreateLLMDeckAndCard", "Created the cards")
+
 }

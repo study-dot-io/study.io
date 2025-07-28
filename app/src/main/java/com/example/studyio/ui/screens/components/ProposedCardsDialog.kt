@@ -56,7 +56,7 @@ fun ProposedCardsDialog(
                         fontWeight = FontWeight.Bold
                     )
                     
-                    Row {
+                    Column {
                         TextButton(
                             onClick = {
                                 selectedCards = selectedCards.mapValues { true }.toMutableMap()

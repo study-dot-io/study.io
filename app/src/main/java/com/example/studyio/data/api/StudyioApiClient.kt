@@ -139,7 +139,7 @@ class StudyioApiClient @Inject constructor() {
 
             if (response.isSuccessful) {
                 response.body()?.let { 
-                    Log.d("StudyioApiClient", "Flashcard generation successful, cards: ${it.cards.size}")
+                    Log.d("StudyioApiClient", "Flashcard generation successful, cards: ${it.data.cards.size}")
                     ApiResult.Success(it) 
                 } ?: ApiResult.Error("Empty response")
             } else {

@@ -51,6 +51,11 @@ data class DocumentUploadRequest(
 )
 
 data class FlashcardGenerationResponse(
+    @SerializedName("data")
+    val data: FlashcardData
+)
+
+data class FlashcardData(
     @SerializedName("cards")
     val cards: List<GeneratedCard>
 )

@@ -54,12 +54,7 @@ class DocumentUploadViewModel @Inject constructor(
             when (result) {
                 is ApiResult.Success -> {
                     Log.d("DocumentUploadViewModel", "API call successful, received data: ${result.data}")
-                    Log.d("DocumentUploadViewModel", "Number of cards in response: ${result.data.cards.size}")
-                    result.data.cards.forEach { card ->
-                        Log.d("DocumentUploadViewModel", "Generated card - front: '${card.front}', back: '${card.back}'")
-                    }
-                    // Extract cards from all FlashcardGenerationResponse objects
-                    result.data.cards
+                    result.data.data.cards
                 }
                 is ApiResult.Error -> {
                     Log.e("DocumentUploadViewModel", "API call failed: ${result.message}")

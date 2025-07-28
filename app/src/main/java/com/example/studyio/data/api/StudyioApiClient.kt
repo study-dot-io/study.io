@@ -92,8 +92,18 @@ class StudyioApiClient @Inject constructor() {
     /**
      *
      */
-    suspend fun syncData(request: SyncRequest): ApiResult<Void> {
+    suspend fun syncData(decks: List<Deck>, cards: List<Card>): ApiResult<Void> {
+        val token = getFirebaseIdToken()
+        if (token == null) {
+            return ApiResult.Error("No Firebase token available - user not authenticated")
+        }
+
         return try {
+            val request = SyncRequest(
+                token = token,
+                decks = decks,
+                cards = cards
+            )
             val response = apiService.sync(request)
 
             if (response.isSuccessful) {

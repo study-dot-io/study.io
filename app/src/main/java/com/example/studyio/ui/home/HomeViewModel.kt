@@ -31,6 +31,10 @@ class HomeViewModel @Inject constructor(
                 loadDecks()
             }
         }
+        onSync()
+    }
+
+    fun onSync() {
         viewModelScope.launch {
             syncService.sync()
         }

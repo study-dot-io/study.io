@@ -16,7 +16,7 @@ interface DeckDao {
     @Query("SELECT * from decks where isSynced = 0")
     suspend fun getUnsynced(): List<Deck>
 
-    @Query("UPDATE cards SET isSynced = 1 WHERE isSynced = 0")
+    @Query("UPDATE decks SET isSynced = 1 WHERE isSynced = 0")
     suspend fun markAllSynced()
 
     @Insert

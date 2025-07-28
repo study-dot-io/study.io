@@ -33,6 +33,8 @@ data class HealthResponse(
 )
 
 data class SyncRequest (
+    @SerializedName("token")
+    val token: String,
     @SerializedName("decks")
     val decks: List<Deck>,
     @SerializedName("cards")

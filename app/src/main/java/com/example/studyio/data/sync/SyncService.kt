@@ -32,9 +32,10 @@ class SyncService @Inject constructor (
         log("Running sync")
         isSyncing = true
         try {
-            val request = getSyncRequest()
+            val unsyncedDecks = deckDao.getUnsynced()
+            val unsyncedCards = cardDao.getUnsynced()
 
-             apiClient.syncData(request).onSuccess {
+             apiClient.syncData(unsyncedDecks, unsyncedCards).onSuccess {
                  markAllSynced()
              }.onError {
                  log("Sync failed: $it")
@@ -44,13 +45,6 @@ class SyncService @Inject constructor (
         } finally {
             isSyncing = false
         }
-    }
-
-    private suspend fun getSyncRequest(): SyncRequest {
-        val unsyncedDecks = deckDao.getUnsynced()
-        val unsyncedCards = cardDao.getUnsynced()
-
-        return SyncRequest(unsyncedDecks, unsyncedCards)
     }
 
     private suspend fun markAllSynced() {

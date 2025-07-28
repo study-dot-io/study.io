@@ -16,6 +16,10 @@ enum class DeckState {
  * @param name Name of the deck
  * @param description Optional description of the deck
  * @param color Color hex string for UI display
+ * @param state Current state of the deck (active, archived, deleted)
+ * @param studySchedule Bitmask representing study schedule (e.g. 0b1111111 for daily)
+ * @param streak Current study streak (number of consecutive days studied)
+ * @param isPublic Whether the deck is public or private
  */
 @Entity(tableName = "decks")
 data class Deck(
@@ -26,7 +30,6 @@ data class Deck(
     var color: String = "#FFFFFF",
     var state: DeckState = DeckState.ACTIVE,
     var studySchedule: Int = 0, // Bitmask for days of the week
-    var lastStudiedDate: Long? = null, // Timestamp of last completed study session
     var streak: Int = 0,
     var isPublic: Boolean = true
 )
@@ -62,11 +65,11 @@ data class Card(
     val id: String = java.util.UUID.randomUUID().toString(),
     val deckId: String,
     val type: CardType = CardType.NEW, // 0=new, 1=learning, 2=review, 3=relearning
-    val due: Long = System.currentTimeMillis() / 1000, // unix timestamp in seconds representing due date
+    val due: Long = System.currentTimeMillis(),
     val front: String = "", // front field value
     val back: String = "", // back field value
     val tags: String = "", // space-separated (might be helpful to have this as a join table in the future)
-    val createdAt: Long = System.currentTimeMillis() / 1000, // unix timestamp in seconds
+    val createdAt: Long = System.currentTimeMillis(),
 )
 
 class Converters {
@@ -107,7 +110,7 @@ data class QuizSession(
     @PrimaryKey
     val id: String = java.util.UUID.randomUUID().toString(),
     val deckId: String,
-    val startedAt: Long = System.currentTimeMillis() / 1000,
+    val startedAt: Long = System.currentTimeMillis(),
     val completedAt: Long? = null // Nullable to indicate ongoing sessions
 )
 
@@ -138,5 +141,5 @@ data class QuizQuestion(
     val sessionId: String,
     val cardId: String,
     val rating: Int, // Rating given to the card during the quiz
-    val reviewedAt: Long = System.currentTimeMillis() / 1000
+    val reviewedAt: Long = System.currentTimeMillis()
 )

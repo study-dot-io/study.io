@@ -1,5 +1,6 @@
 package com.example.studyio.ui.screens
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.entities.Deck
@@ -36,9 +37,14 @@ class CardCreateViewModel @Inject constructor(
                 back = back,
                 tags = tags
             )
-            cardDao.insertCard(card)
-            Events.decksUpdated()
+            viewModelScope.launch {
+                cardDao.insertCard(card)
+                Events.decksUpdated()
+            }
             onDone()
         }
     }
 }
+
+
+

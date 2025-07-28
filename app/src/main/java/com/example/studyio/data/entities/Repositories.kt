@@ -5,7 +5,6 @@ import javax.inject.Singleton
 
 @Singleton
 class DeckRepository @Inject constructor(private val deckDao: DeckDao) {
-    suspend fun getAllDecks(): List<Deck> = deckDao.getAllDecks()
     suspend fun getActiveDecks(): List<Deck> = deckDao.getActiveDecks()
     suspend fun getArchivedDecks(): List<Deck> = deckDao.getArchivedDecks()
     suspend fun getDeckById(deckId: String): Deck? = deckDao.getDeckById(deckId)
@@ -18,22 +17,15 @@ class DeckRepository @Inject constructor(private val deckDao: DeckDao) {
         }
     }
     suspend fun getDueCardsCount(deckId: String): Int = deckDao.getDueCardsCount(deckId)
-    suspend fun toggleDeckArchiveStatus(deckId: String) {
-        getDeckById(deckId)?.let { deck ->
-            val updatedDeck = deck.copy(state = if (deck.state == DeckState.ACTIVE) DeckState.ARCHIVED else DeckState.ACTIVE)
-            updateDeck(updatedDeck)
-        }
-    }
 }
 
 @Singleton
 class CardRepository @Inject constructor(
     private val cardDao: CardDao,
 ) {
-    suspend fun getDueCards(deckId: String, limit: Int = 200): List<Card> = cardDao.getDueCards(deckId, limit)
+    suspend fun getDueCards(deckId: String, limit: Int = 20): List<Card> = cardDao.getDueCards(deckId, limit)
     suspend fun updateCard(card: Card) = cardDao.updateCard(card)
     suspend fun getTotalCardsCreated(): Int = cardDao.getTotalCardsCreated()
-    suspend fun insertCard(card: Card) = cardDao.insertCard(card)
 }
 
 @Singleton
@@ -54,7 +46,12 @@ class QuizSessionRepository @Inject constructor(private val quizSessionDao: Quiz
     suspend fun getOngoingSession(deckId: String): QuizSession? {
         return quizSessionDao.getOngoingSession(deckId)
     }
+
+    suspend fun getLastCompletedSessionDate(deckId: String): Long? {
+        return quizSessionDao.getLastCompletedSessionDate(deckId)
+    }
 }
+
 
 @Singleton
 class QuizQuestionRepository @Inject constructor(private val quizQuestionDao: QuizQuestionDao) {

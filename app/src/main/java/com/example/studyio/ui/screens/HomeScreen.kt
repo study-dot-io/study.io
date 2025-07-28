@@ -271,12 +271,12 @@ fun HomeScreen(
                     }
                 }
 
-                items(decksToShow) { deck ->
+                items(decksToShow) { deckInfo ->
                     DeckCard(
-                        deck = deck,
-                        onClick = { onDeckClick(deck) },
-                        onReview = { onStudyNowForDeck(deck) },
-                        onLongPress = { deckToManage = deck }
+                        deckInfo = deckInfo,
+                        onClick = { onDeckClick(deckInfo.deck) },
+                        onReview = { onStudyNowForDeck(deckInfo.deck) },
+                        onLongPress = { deckToManage = deckInfo.deck }
                     )
                 }
 

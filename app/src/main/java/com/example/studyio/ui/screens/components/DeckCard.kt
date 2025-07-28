@@ -10,8 +10,6 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,28 +17,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.studyio.data.entities.Deck
-import com.example.studyio.ui.home.HomeViewModel
+import com.example.studyio.ui.home.DeckInfo
 import com.example.studyio.utils.StudyScheduleUtils
 
 @Composable
 fun DeckCard(
-    deck: Deck,
+    deckInfo: DeckInfo,
     onClick: () -> Unit,
     onReview: () -> Unit,
     onLongPress: () -> Unit
 ) {
-    val viewModel: HomeViewModel = hiltViewModel()
-    
-    val cardCountMap by viewModel.cardCountMap.collectAsState()
+    val deck = deckInfo.deck
     val isScheduledToday = StudyScheduleUtils.isScheduledToday(deck.studySchedule)
-    val dueCardsCount = cardCountMap[deck.id] ?: 0
-    val hasCompletedToday = deck.lastStudiedDate?.let {
-        val dayInSeconds = 24 * 60 * 60
-        val currentTime = System.currentTimeMillis() / 1000
-        (currentTime - it) < dayInSeconds
-    } ?: false
+    val dueCardsCount = deckInfo.dueCardsCount
+    val hasCompletedToday = deckInfo.hasCompletedToday
 
     Card(
         modifier = Modifier
@@ -119,24 +109,19 @@ fun DeckCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
-                    
-                    // Add status indicator
-                    if (isScheduledToday) {
-                        Text(
-                            text = " • Due Today",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (hasCompletedToday) 
-                                MaterialTheme.colorScheme.primary 
-                            else 
-                                MaterialTheme.colorScheme.error
-                        )
-                    }
-                    
+
                     if (hasCompletedToday) {
                         Text(
                             text = " • Completed",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    else if (isScheduledToday) {
+                        Text(
+                            text = " • Due Today",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 }

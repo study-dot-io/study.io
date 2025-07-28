@@ -1,5 +1,6 @@
 package com.example.studyio.ui.quiz
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.entities.Card
@@ -58,11 +59,11 @@ class QuizViewModel @Inject constructor(
         viewModelScope.launch {
             cardRepository.updateCard(
                 card.copy(
-                    due = System.currentTimeMillis() / 1000 + (rating * 24 * 60 * 60)
-                )
+                    due = System.currentTimeMillis() + (rating * 24 * 60 * 60 * 1000), // Adjust due date based on rating
+                ) 
             )
-            // Fire event after every card is answered
             Events.decksUpdated()
+            // Fire event after every card is answered
             val nextIndex = idx + 1
             if (nextIndex >= cards.size) {
                 _isComplete.value = true
@@ -81,6 +82,7 @@ class QuizViewModel @Inject constructor(
                 _currentSession.value = completedSession
             }
             _isComplete.value = true
+            Events.quizCompleted() 
         }
     }
 

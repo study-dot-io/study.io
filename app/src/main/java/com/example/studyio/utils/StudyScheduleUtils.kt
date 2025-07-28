@@ -56,10 +56,10 @@ object StudyScheduleUtils {
      */
     fun isScheduledToday(bitmask: Int): Boolean {
         val calendar = Calendar.getInstance()
-        val todayIndex = calendar.get(Calendar.DAY_OF_WEEK) - 1 // Calendar.SUNDAY is 1, so we get 0-6
+        val todayIndex = calendar.get(Calendar.DAY_OF_WEEK) - 1 // Convert to 0-based (Sunday = 0)
         return (bitmask and (1 shl todayIndex)) > 0
     }
-
+    
     /**
      * Gets the next scheduled date as a formatted string.
      */
@@ -78,5 +78,24 @@ object StudyScheduleUtils {
         }
         return "Next week" // Should not happen if schedule is not 0
     }
-}
 
+    /**
+     * Checks if a given timestamp (in milliseconds) falls on the current day.
+     */
+    fun isCurrentDay(timestampMilliseconds: Long): Boolean {
+        val calendar = Calendar.getInstance()
+        
+        // Get start of today (00:00:00)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val startOfToday = calendar.timeInMillis
+        
+        // Get start of tomorrow (00:00:00)
+        calendar.add(Calendar.DAY_OF_MONTH, 1)
+        val startOfTomorrow = calendar.timeInMillis
+        
+        return timestampMilliseconds >= startOfToday && timestampMilliseconds < startOfTomorrow
+    }
+}

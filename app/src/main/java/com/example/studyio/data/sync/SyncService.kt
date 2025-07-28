@@ -18,8 +18,6 @@ class SyncService @Inject constructor (
     private var lastSyncTime: Long = 0
 
     suspend fun sync() {
-        val now = System.currentTimeMillis()
-
         if (isSyncing) {
             log("Sync skipped: already in progress")
             return

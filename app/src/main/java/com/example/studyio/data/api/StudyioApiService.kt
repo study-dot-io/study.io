@@ -39,4 +39,12 @@ interface StudyioApiService {
     suspend fun sync(
         @Body request: SyncRequest
     ): Response<Void>
+
+    /**
+     * Upload document and generate flashcards
+     */
+    @POST("generate_flashcards")
+    suspend fun generateFlashcards(
+        @Body request: DocumentUploadRequest
+    ): Response<FlashcardGenerationResponse>
 }

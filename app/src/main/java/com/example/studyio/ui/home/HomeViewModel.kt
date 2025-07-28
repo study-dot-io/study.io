@@ -2,6 +2,8 @@ package com.example.studyio.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.studyio.data.entities.Card
+import com.example.studyio.data.entities.CardRepository
 import com.example.studyio.data.entities.Deck
 import com.example.studyio.data.entities.DeckRepository
 import com.example.studyio.data.entities.DeckState
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val deckRepository: DeckRepository
+    private val deckRepository: DeckRepository,
+    private val cardRepository: CardRepository
 ) : ViewModel() {
     private val _activeDecks = MutableStateFlow<List<Deck>>(emptyList())
     private val _archivedDecks = MutableStateFlow<List<Deck>>(emptyList())
@@ -65,6 +68,30 @@ class HomeViewModel @Inject constructor(
             deckRepository.insertDeck(deck)
             Events.decksUpdated()
             onComplete?.invoke()
+        }
+    }
+    
+    fun updateDeck(deck: Deck, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            deckRepository.updateDeck(deck)
+            loadDecks()
+            Events.decksUpdated()
+            onComplete?.invoke()
+        }
+    }
+
+    fun createDeckWithCards(deck: Deck, cards: List<Pair<String, String>>) {
+        viewModelScope.launch {
+            deckRepository.insertDeck(deck)
+            cards.forEach { (front, back) ->
+                val card = Card(
+                    deckId = deck.id,
+                    front = front,
+                    back = back,
+                )
+                cardRepository.insertCard(card)
+            }
+            Events.decksUpdated()
         }
     }
 

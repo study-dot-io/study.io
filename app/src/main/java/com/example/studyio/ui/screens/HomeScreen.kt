@@ -1,8 +1,7 @@
 package com.example.studyio.ui.screens
 
-import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,38 +12,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.studyio.ui.home.HomeViewModel
-import com.example.studyio.ui.auth.AuthViewModel
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.ui.platform.LocalContext
-import com.firebase.ui.auth.data.model.User
-import com.google.firebase.auth.FirebaseUser
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.Request
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.toRequestBody
-import kotlinx.coroutines.tasks.await
-import android.util.Base64
 import com.example.studyio.data.entities.Deck
+import com.example.studyio.ui.auth.AuthViewModel
 import com.example.studyio.ui.home.DeckTab
-import org.json.JSONArray
-import org.json.JSONObject
-import java.util.concurrent.TimeUnit
+import com.example.studyio.ui.home.HomeViewModel
+import com.example.studyio.ui.screens.components.DeckCard
+import com.example.studyio.ui.screens.components.DeckManagementModal
+import com.example.studyio.ui.screens.components.ImportLoadingDialog
+import com.example.studyio.ui.screens.components.ImportStatusCard
+import com.example.studyio.ui.screens.components.uploadDocumentToLLM
+import com.example.studyio.ui.screens.components.CreateLLMDeckAndCard
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,15 +40,9 @@ fun HomeScreen(
     onImportApkg: (() -> Unit)? = null,
     onStudyNowForDeck: (Deck) -> Unit = {},
     onDeleteDeck: (Deck) -> Unit = {},
-    onSignOut: (() -> Unit)? = null,
+    onNavigateToAuth: () -> Unit = {},
 ) {
     var deckToManage by remember { mutableStateOf<Deck?>(null) }
-    var showUserInfo by remember { mutableStateOf(false) }
-    var shareDeckEmailPrompt by remember { mutableStateOf(false) }
-    var emailToShare by remember { mutableStateOf("") }
-    var selectedDeckForShare by remember { mutableStateOf<Deck?>(null) }
-    val context = LocalContext.current
-    
     val authViewModel: AuthViewModel = hiltViewModel()
     val homeViewModel: HomeViewModel = hiltViewModel()
     val user by authViewModel.currentUser.collectAsState()
@@ -103,6 +81,31 @@ fun HomeScreen(
         },
         floatingActionButton = {
             var fabExpanded by remember { mutableStateOf(false) }
+            val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+            
+            // State to hold the LLM result when document is uploaded
+            var uploadedDocumentResult by remember { mutableStateOf<Map<String, Any>?>(null) }
+            
+            val documentLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri ->
+                if (uri != null && user != null) {
+                    scope.launch {
+                        val result = uploadDocumentToLLM(user!!, context, uri)
+                        if (result != null) {
+                            uploadedDocumentResult = result
+                        }
+                    }
+                }
+            }
+            
+            // Once the document is uploaded, create deck and card
+            uploadedDocumentResult?.let {
+                CreateLLMDeckAndCard(it)
+                uploadedDocumentResult = null
+            }
+            
             Box {
                 FloatingActionButton(
                     onClick = { fabExpanded = !fabExpanded },
@@ -129,6 +132,18 @@ fun HomeScreen(
                             if (onImportApkg != null) onImportApkg()
                         },
                         enabled = !isImporting
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Upload Document to LLM") },
+                        onClick = {
+                            fabExpanded = false
+                            if (user != null) {
+                                documentLauncher.launch("*/*")
+                            } else {
+                                // Navigate to auth screen if user is not signed in
+                                onNavigateToAuth()
+                            }
+                        }
                     )
                 }
             }
@@ -204,9 +219,6 @@ fun HomeScreen(
                 item {
                     Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
                 }
-                item{
-                    GetDocumentFromUser(user)
-                }
             }
         }
 
@@ -239,15 +251,7 @@ fun HomeScreen(
                 onUpdateSchedule = { schedule ->
                     homeViewModel.updateDeckSchedule(deck.id, schedule)
                     deckToManage = null
-                    },
-                dismissButton = {
-                    TextButton(onClick = {
-                        shareDeckEmailPrompt = false
-                        emailToShare = ""
-                    }) {
-                        Text("Cancel")
-                    }
-                }
+                },
             )
         }
     }

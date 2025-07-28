@@ -11,7 +11,6 @@ class DeckRepository @Inject constructor(private val deckDao: DeckDao) {
     suspend fun getDeckById(deckId: String): Deck? = deckDao.getDeckById(deckId)
     suspend fun insertDeck(deck: Deck) = deckDao.insertDeck(deck)
     suspend fun updateDeck(deck: Deck) = deckDao.updateDeck(deck)
-    suspend fun hardDeleteDeck(deckId: String) = deckDao.hardDeleteDeck(deckId)
     suspend fun softDeleteDeck(deckId: String) {
         getDeckById(deckId)?.let { deck ->
             val updatedDeck = deck.copy(state = DeckState.DELETED)
@@ -34,6 +33,7 @@ class CardRepository @Inject constructor(
     suspend fun getDueCards(deckId: String, limit: Int = 200): List<Card> = cardDao.getDueCards(deckId, limit)
     suspend fun updateCard(card: Card) = cardDao.updateCard(card)
     suspend fun getTotalCardsCreated(): Int = cardDao.getTotalCardsCreated()
+    suspend fun insertCard(card: Card) = cardDao.insertCard(card)
 }
 
 @Singleton

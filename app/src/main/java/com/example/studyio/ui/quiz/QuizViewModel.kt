@@ -33,7 +33,7 @@ class QuizViewModel @Inject constructor(
 
     fun loadQuiz(deckId: String) {
         viewModelScope.launch {
-            val cards = cardRepository.getDueCards(deckId, 200)
+            val cards = cardRepository.getDueCards(deckId)
             _dueCards.value = cards
             _currentIndex.value = 0
             _isComplete.value = cards.isEmpty()

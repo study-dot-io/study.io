@@ -3,6 +3,7 @@ package com.example.studyio.ui.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.studyio.data.entities.CardRepository
 import com.example.studyio.data.entities.Deck
 import com.example.studyio.data.entities.DeckRepository
 import com.example.studyio.data.entities.QuizSessionRepository
@@ -27,6 +28,7 @@ data class DeckInfo(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val deckRepository: DeckRepository,
+    private val cardRepository: CardRepository,
     private val quizSessionRepository: QuizSessionRepository
 ) : ViewModel() {
     private val _activeDecks = MutableStateFlow<List<DeckInfo>>(emptyList())
@@ -43,8 +45,11 @@ class HomeViewModel @Inject constructor(
             Events.deckUpdated.collectLatest {
                 loadDecks()
             }
-            Events.quizCompleted.collectLatest { 
-                loadDecks() // Mark quiz completion
+        }
+        
+        viewModelScope.launch {
+            Events.quizCompleted.collectLatest {
+                loadDecks()
             }
         }
     }
@@ -54,7 +59,6 @@ class HomeViewModel @Inject constructor(
     }
 
     fun loadDecks() {
-        Log.w("HomeViewModel", "Loading decks")
         viewModelScope.launch {
             _activeDecks.value = createDeckInfoList(deckRepository.getActiveDecks())
             _archivedDecks.value = createDeckInfoList(deckRepository.getArchivedDecks())
@@ -63,7 +67,7 @@ class HomeViewModel @Inject constructor(
 
     private suspend fun createDeckInfoList(decks: List<Deck>): List<DeckInfo> {
         return decks.map { deck ->
-            val dueCardsCount = deckRepository.getDueCardsCount(deck.id)
+            val dueCardsCount = cardRepository.getDueCardsCount(deck.id)
             val lastCompletedDate = quizSessionRepository.getLastCompletedSessionDate(deck.id)
             val hasCompletedToday = lastCompletedDate?.let {
                 StudyScheduleUtils.isCurrentDay(it)
@@ -80,8 +84,8 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             deckRepository.insertDeck(deck)
             Events.decksUpdated()
-            onComplete?.invoke()
         }
+        onComplete?.invoke()
     }
     
     fun updateDeck(deck: Deck, onComplete: (() -> Unit)? = null) {

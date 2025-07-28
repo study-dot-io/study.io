@@ -5,6 +5,7 @@ import javax.inject.Singleton
 
 @Singleton
 class DeckRepository @Inject constructor(private val deckDao: DeckDao) {
+    suspend fun getAllDecks(): List<Deck> = deckDao.getAllDecks()
     suspend fun getActiveDecks(): List<Deck> = deckDao.getActiveDecks()
     suspend fun getArchivedDecks(): List<Deck> = deckDao.getArchivedDecks()
     suspend fun getDeckById(deckId: String): Deck? = deckDao.getDeckById(deckId)
@@ -16,16 +17,18 @@ class DeckRepository @Inject constructor(private val deckDao: DeckDao) {
             updateDeck(updatedDeck)
         }
     }
-    suspend fun getDueCardsCount(deckId: String): Int = deckDao.getDueCardsCount(deckId)
 }
 
 @Singleton
 class CardRepository @Inject constructor(
     private val cardDao: CardDao,
 ) {
-    suspend fun getDueCards(deckId: String, limit: Int = 20): List<Card> = cardDao.getDueCards(deckId, limit)
+    suspend fun getCardsByDeckId(deckId: String): List<Card> = cardDao.getCardsByDeckId(deckId)
+    suspend fun insertCard(card: Card) = cardDao.insertCard(card)
+    suspend fun getDueCards(deckId: String): List<Card> = cardDao.getDueCardsBefore(deckId)
     suspend fun updateCard(card: Card) = cardDao.updateCard(card)
     suspend fun getTotalCardsCreated(): Int = cardDao.getTotalCardsCreated()
+    suspend fun getDueCardsCount(deckId: String): Int = cardDao.getDueCardCountBefore(deckId)
 }
 
 @Singleton

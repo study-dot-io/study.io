@@ -59,6 +59,8 @@ data class Card(
     val back: String = "", // back field value
     val tags: String = "", // space-separated (might be helpful to have this as a join table in the future)
     val createdAt: Long = System.currentTimeMillis() / 1000, // unix timestamp in seconds
+    var difficulty: Float = 1f, // difficulty rating
+    var lastReviewed: Long = 0L // unix timestamp in seconds of last review
 )
 
 class Converters {

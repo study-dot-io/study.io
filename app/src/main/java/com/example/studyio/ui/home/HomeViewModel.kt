@@ -122,8 +122,13 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    suspend fun getDeckById(deckId: String): Deck? {
+        return deckRepository.getDeckById(deckId)
+    }
 }
 
 enum class DeckTab {
     ACTIVE, ARCHIVED
 }
+

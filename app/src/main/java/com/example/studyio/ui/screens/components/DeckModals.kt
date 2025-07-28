@@ -1,138 +1,124 @@
 package com.example.studyio.ui.screens.components
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Unarchive
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.data.entities.Deck
 import com.example.studyio.data.entities.DeckState
-import com.example.studyio.ui.home.HomeViewModel
-import com.example.studyio.ui.screens.sendDeckByEmail
 import com.example.studyio.utils.StudyScheduleUtils
 import com.google.firebase.auth.FirebaseUser
 
 @Composable
-fun DeckManagementModal(
-    deck: Deck,
+fun ShareDeckDialog(
+    deckName: String,
     onDismiss: () -> Unit,
-    onArchive: () -> Unit,
-    onDelete: () -> Unit,
-    onUpdateSchedule: (Int) -> Unit,
-    onNavigateToAuth: () -> Unit = {},
-    user: FirebaseUser? = null,
-    homeViewModel: HomeViewModel = hiltViewModel()
+    onSend: (email: String) -> Unit
 ) {
-    var showScheduleDialog by remember { mutableStateOf(false) }
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-    var shareDeckEmailPrompt by remember { mutableStateOf(false) }
-    var selectedDeckForShare by remember { mutableStateOf<Deck?>(null) }
-    var emailToShare by remember { mutableStateOf("") }
-    val context = LocalContext.current
+    var email by remember { mutableStateOf("") }
+    val isEmailValid = remember(email) { email.isNotBlank() && "@" in email }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Manage ${deck.name}") },
+        title = { Text("Share '$deckName'") },
         text = {
-            Column {
-                Text("Choose an action for this deck:")
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Share/Public/Private section
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            val updatedDeck = deck.copy(isPublic = !deck.isPublic)
-                            homeViewModel.updateDeck(updatedDeck)
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(if (deck.isPublic) "Make Private" else "Make Public")
-                    }
-                    
-                    Spacer(modifier = Modifier.width(8.dp))
-                    
-                    OutlinedButton(
-                        onClick = {
-                            if (user == null) {
-                                Toast.makeText(context, "You must be signed in to share a deck.", Toast.LENGTH_SHORT).show()
-                                onNavigateToAuth()
-                            } else if (!deck.isPublic) {
-                                Toast.makeText(context, "The deck must be public to be shared.", Toast.LENGTH_SHORT).show()
-                            } else {
-                                selectedDeckForShare = deck
-                                shareDeckEmailPrompt = true
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Share")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Schedule button
-                OutlinedButton(
-                    onClick = { showScheduleDialog = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Schedule, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Modify Schedule")
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Archive button
-                OutlinedButton(
-                    onClick = onArchive,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = if (deck.state == DeckState.ARCHIVED) Icons.Default.Unarchive else Icons.Default.Archive,
-                        contentDescription = null
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (deck.state == DeckState.ARCHIVED) "Unarchive Deck" else "Archive Deck")
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Delete button
-                OutlinedButton(
-                    onClick = { showDeleteConfirmation = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Delete Deck")
-                }
-            }
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Recipient's email") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
         },
         confirmButton = {
+            TextButton(
+                onClick = { onSend(email) },
+                enabled = isEmailValid
+            ) {
+                Text("Send")
+            }
+        },
+        dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text("Cancel")
             }
         }
     )
+}
 
-    // Schedule selection dialog
+@Composable
+fun DeleteConfirmationDialog(
+    deckName: String,
+    onDismiss: () -> Unit,
+    onConfirmDelete: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete Deck") },
+        text = { Text("Are you sure you want to permanently delete '$deckName'? This action cannot be undone.") },
+        confirmButton = {
+            TextButton(onClick = onConfirmDelete) {
+                Text("Delete", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+
+@Composable
+fun DeckManagementModal(
+    deck: Deck,
+    user: FirebaseUser?,
+    onDismiss: () -> Unit,
+    onTogglePrivacy: () -> Unit,
+    onToggleArchive: () -> Unit,
+    onDelete: () -> Unit,
+    onUpdateSchedule: (Int) -> Unit,
+    onShare: (email: String) -> Unit,
+    onNavigateToAuth: () -> Unit,
+) {
+    val context = LocalContext.current
+    var showScheduleDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
+
     if (showScheduleDialog) {
         ScheduleSelectionDialog(
             currentSchedule = StudyScheduleUtils.getDayIndicesFromBitmask(deck.studySchedule),
@@ -145,62 +131,86 @@ fun DeckManagementModal(
         )
     }
 
-    // Delete confirmation
-    if (showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete Deck") },
-            text = { Text("Are you sure you want to permanently delete '${deck.name}'? This action cannot be undone.") },
-            confirmButton = {
-                TextButton(
+    if (showDeleteDialog) {
+        DeleteConfirmationDialog(
+            deckName = deck.name,
+            onDismiss = { showDeleteDialog = false },
+            onConfirmDelete = {
+                onDelete()
+                showDeleteDialog = false
+            }
+        )
+    }
+
+    if (showShareDialog) {
+        ShareDeckDialog(
+            deckName = deck.name,
+            onDismiss = { showShareDialog = false },
+            onSend = { email ->
+                onShare(email)
+                showShareDialog = false
+            }
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Manage ${deck.name}") },
+        text = {
+            Column {
+                OutlinedButton(onClick = onTogglePrivacy, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (deck.isPublic) "Make Private" else "Make Public")
+                }
+                Spacer(Modifier.height(8.dp))
+
+                // Share Button
+                OutlinedButton(
                     onClick = {
-                        onDelete()
-                        showDeleteConfirmation = false
-                    }
-                ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-    
-    // Email sharing dialog
-    if (shareDeckEmailPrompt && selectedDeckForShare != null) {
-        AlertDialog(
-            onDismissRequest = { shareDeckEmailPrompt = false },
-            title = { Text("Share Deck") },
-            text = {
-                OutlinedTextField(
-                    value = emailToShare,
-                    onValueChange = { emailToShare = it },
-                    label = { Text("Enter recipient email") },
+                        when {
+                            user == null -> onNavigateToAuth()
+                            !deck.isPublic -> Toast.makeText(context, "Deck must be public to share.", Toast.LENGTH_SHORT).show()
+                            else -> showShareDialog = true
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    sendDeckByEmail(context, selectedDeckForShare!!, emailToShare)
-                    shareDeckEmailPrompt = false
-                    emailToShare = ""
-                }) {
-                    Text("Send")
+                ) {
+                    Text("Share")
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    shareDeckEmailPrompt = false
-                    emailToShare = ""
-                }) {
-                    Text("Cancel")
+                Spacer(Modifier.height(16.dp))
+
+                // Modify Schedule Button
+                OutlinedButton(onClick = { showScheduleDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Schedule, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Modify Schedule")
+                }
+                Spacer(Modifier.height(8.dp))
+
+                // Archive / Unarchive Button
+                OutlinedButton(onClick = onToggleArchive, modifier = Modifier.fillMaxWidth()) {
+                    val isArchived = deck.state == DeckState.ARCHIVED
+                    Icon(if (isArchived) Icons.Default.Unarchive else Icons.Default.Archive, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (isArchived) "Unarchive Deck" else "Archive Deck")
+                }
+                Spacer(Modifier.height(8.dp))
+
+                // Delete Button
+                OutlinedButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Delete Deck")
                 }
             }
-        )
-    }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
+        }
+    )
 }
 
 @Composable
@@ -268,3 +278,5 @@ fun ScheduleSelectionDialog(
         }
     )
 }
+
+

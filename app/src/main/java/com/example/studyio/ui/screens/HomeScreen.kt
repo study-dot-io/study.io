@@ -1,5 +1,6 @@
 package com.example.studyio.ui.screens
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.data.entities.Deck
+import com.example.studyio.data.entities.DeckState
 import com.example.studyio.ui.auth.AuthViewModel
 import com.example.studyio.ui.home.DeckTab
 import com.example.studyio.ui.home.HomeViewModel
@@ -49,6 +51,7 @@ fun HomeScreen(
     val activeDecks by homeViewModel.activeDecks.collectAsState()
     val archivedDecks by homeViewModel.archivedDecks.collectAsState()
     val selectedTab by homeViewModel.selectedTab.collectAsState()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -174,11 +177,72 @@ fun HomeScreen(
                 }
 
                 item {
+                    // User authentication status
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp, bottom = 12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (user != null) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                MaterialTheme.colorScheme.secondaryContainer
+                        ),
+                        onClick = if (user == null) onNavigateToAuth else { {} }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (user != null) "Signed in as:" else "Not signed in",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (user != null) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = if (user != null) 
+                                        user!!.email ?: "Unknown user" 
+                                    else 
+                                        "Tap to sign in for full features",
+                                    style = if (user != null) 
+                                        MaterialTheme.typography.titleMedium 
+                                    else 
+                                        MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (user != null) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (user != null) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                            if (user != null) {
+                                TextButton(
+                                    onClick = {
+                                        authViewModel.signOut()
+                                    }
+                                ) {
+                                    Text(
+                                        "Sign Out",
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Section title for decks
                     Text(
                         text = if (selectedTab == DeckTab.ACTIVE) "Your Decks" else "Archived Decks",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
+                        modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
                     )
                 }
                 
@@ -239,9 +303,18 @@ fun HomeScreen(
         deckToManage?.let { deck ->
             DeckManagementModal(
                 deck = deck,
+                user = user,
                 onDismiss = { deckToManage = null },
-                onArchive = {
-                    homeViewModel.toggleDeckArchiveStatus(deck)
+                onNavigateToAuth = onNavigateToAuth,
+                onTogglePrivacy = {
+                    val updatedDeck = deck.copy(isPublic = !deck.isPublic)
+                    homeViewModel.updateDeck(updatedDeck)
+                    deckToManage = null
+                },
+                onToggleArchive = {
+                    val newState = if (deck.state == DeckState.ARCHIVED) DeckState.ACTIVE else DeckState.ARCHIVED
+                    val updatedDeck = deck.copy(state = newState)
+                    homeViewModel.updateDeck(updatedDeck)
                     deckToManage = null
                 },
                 onDelete = {
@@ -249,9 +322,19 @@ fun HomeScreen(
                     deckToManage = null
                 },
                 onUpdateSchedule = { schedule ->
-                    homeViewModel.updateDeckSchedule(deck.id, schedule)
+                    val updatedDeck = deck.copy(studySchedule = schedule)
+                    homeViewModel.updateDeck(updatedDeck)
                     deckToManage = null
                 },
+                onShare = { email ->
+                    try {
+                        sendDeckByEmail(context, deck, email)
+                        Toast.makeText(context, "Sharing deck...", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Failed to share deck: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                    deckToManage = null // Close modal after sharing attempt
+                }
             )
         }
     }

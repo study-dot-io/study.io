@@ -93,7 +93,7 @@ class StudyioApiClient @Inject constructor() {
     /**
      *
      */
-    suspend fun syncData(decks: List<Deck>, cards: List<Card>): ApiResult<Void> {
+    suspend fun syncData(decks: List<Deck>, cards: List<Card>): ApiResult<SyncResponse> {
         val token = getFirebaseIdToken()
         if (token == null) {
             return ApiResult.Error("No Firebase token available - user not authenticated")
@@ -108,8 +108,12 @@ class StudyioApiClient @Inject constructor() {
             val response = apiService.sync(request)
 
             if (response.isSuccessful) {
-                @Suppress("UNCHECKED_CAST")
-                ApiResult.Success(null) as ApiResult<Void>
+                val body = response.body()
+                if (body != null) {
+                    ApiResult.Success(body)
+                } else {
+                    ApiResult.Error("Empty response body")
+                }
             } else {
                 ApiResult.Error("HTTP ${response.code()}: ${response.message()}")
             }

@@ -110,7 +110,7 @@ fun DeckCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
 
-                    if (hasCompletedToday) {
+                    if (hasCompletedToday && isScheduledToday) {
                         Text(
                             text = " • Completed",
                             style = MaterialTheme.typography.bodySmall,

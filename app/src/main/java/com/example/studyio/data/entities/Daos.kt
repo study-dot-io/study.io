@@ -43,12 +43,10 @@ interface CardDao {
     @Query("SELECT * FROM cards WHERE deckId = :deckId ORDER BY createdAt DESC")
     suspend fun getCardsByDeckId(deckId: String): List<Card>
 
-//    @Query("SELECT * FROM cards WHERE deckId = :deckId AND due <= (strftime('%s', 'now') * 1000) ORDER BY due ASC LIMIT :limit")
     @Query("SELECT * FROM cards WHERE deckId = :deckId AND due <= :before ORDER BY due ASC")
     suspend fun getDueCardsBefore(deckId: String, before: Long = System.currentTimeMillis()): List<Card>
 
     @Query("SELECT COUNT(*) FROM cards WHERE deckId = :deckId AND due <= :before")
-//    @Query("SELECT COUNT(*) FROM cards WHERE deckId = :deckId")
     suspend fun getDueCardCountBefore(deckId: String, before: Long = System.currentTimeMillis()): Int
     
     @Update

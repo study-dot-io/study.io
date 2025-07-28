@@ -1,5 +1,6 @@
 package com.example.studyio.data.api
 
+import android.util.Log
 import com.example.studyio.data.entities.Card
 import com.example.studyio.data.entities.Deck
 import com.google.firebase.auth.FirebaseAuth
@@ -18,7 +19,7 @@ import javax.inject.Singleton
 @Singleton
 class StudyioApiClient @Inject constructor() {
     
-    private val baseUrl = "http://localhost:5000/" // Localhost for Android emulator
+    private val baseUrl = "http://127.0.0.1:5001"
     
     private val auth = FirebaseAuth.getInstance()
     
@@ -117,6 +118,37 @@ class StudyioApiClient @Inject constructor() {
         }
     }
 
+
+    /**
+     * Upload document and generate flashcards
+     */
+    suspend fun generateFlashcards(fileName: String, base64File: String): ApiResult<FlashcardGenerationResponse> {
+        val token = getFirebaseIdToken()
+        if (token == null) {
+            return ApiResult.Error("No Firebase token available - user not authenticated")
+        }
+
+        return try {
+            val request = DocumentUploadRequest(
+                loginToken = token,
+                fileName = fileName,
+                file = base64File
+            )
+            val response = apiService.generateFlashcards(request)
+            Log.d("StudyioApiClient", "Response from generateFlashcards: $response")
+
+            if (response.isSuccessful) {
+                response.body()?.let { 
+                    Log.d("StudyioApiClient", "Flashcard generation successful, cards: ${it.cards.size}")
+                    ApiResult.Success(it) 
+                } ?: ApiResult.Error("Empty response")
+            } else {
+                ApiResult.Error("HTTP ${response.code()}: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            ApiResult.Error("Network error: ${e.message}")
+        }
+    }
 
     /**
      * MAIN EXAMPLE: Access protected route with Firebase authentication

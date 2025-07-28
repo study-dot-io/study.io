@@ -40,3 +40,24 @@ data class SyncRequest (
     @SerializedName("cards")
     val cards: List<Card>,
 )
+
+data class DocumentUploadRequest(
+    @SerializedName("login_token")
+    val loginToken: String,
+    @SerializedName("file_name")
+    val fileName: String,
+    @SerializedName("file")
+    val file: String
+)
+
+data class FlashcardGenerationResponse(
+    @SerializedName("cards")
+    val cards: List<GeneratedCard>
+)
+
+data class GeneratedCard(
+    @SerializedName("front")
+    val front: String,
+    @SerializedName("back")
+    val back: String
+)

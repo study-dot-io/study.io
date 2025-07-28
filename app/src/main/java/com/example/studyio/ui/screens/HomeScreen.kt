@@ -29,8 +29,6 @@ import com.example.studyio.ui.screens.components.DeckCard
 import com.example.studyio.ui.screens.components.DeckManagementModal
 import com.example.studyio.ui.screens.components.ImportLoadingDialog
 import com.example.studyio.ui.screens.components.ImportStatusCard
-import com.example.studyio.ui.screens.components.uploadDocumentToLLM
-import com.example.studyio.ui.screens.components.CreateLLMDeckAndCard
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,30 +85,6 @@ fun HomeScreen(
         },
         floatingActionButton = {
             var fabExpanded by remember { mutableStateOf(false) }
-            val context = LocalContext.current
-            val scope = rememberCoroutineScope()
-            
-            // State to hold the LLM result when document is uploaded
-            var uploadedDocumentResult by remember { mutableStateOf<Map<String, Any>?>(null) }
-            
-            val documentLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent()
-            ) { uri ->
-                if (uri != null && user != null) {
-                    scope.launch {
-                        val result = uploadDocumentToLLM(user!!, context, uri)
-                        if (result != null) {
-                            uploadedDocumentResult = result
-                        }
-                    }
-                }
-            }
-            
-            // Once the document is uploaded, create deck and card
-            uploadedDocumentResult?.let {
-                CreateLLMDeckAndCard(it)
-                uploadedDocumentResult = null
-            }
             
             Box {
                 FloatingActionButton(
@@ -138,18 +112,6 @@ fun HomeScreen(
                             if (onImportApkg != null) onImportApkg()
                         },
                         enabled = !isImporting
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Upload Document to LLM") },
-                        onClick = {
-                            fabExpanded = false
-                            if (user != null) {
-                                documentLauncher.launch("*/*")
-                            } else {
-                                // Navigate to auth screen if user is not signed in
-                                onNavigateToAuth()
-                            }
-                        }
                     )
                 }
             }

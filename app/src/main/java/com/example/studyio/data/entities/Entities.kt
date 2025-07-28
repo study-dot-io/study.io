@@ -71,12 +71,13 @@ data class Card(
     val id: String = java.util.UUID.randomUUID().toString(),
     val deckId: String,
     val type: CardType = CardType.NEW, // 0=new, 1=learning, 2=review, 3=relearning
-    val due: Long = System.currentTimeMillis(),
+    var due: Long = System.currentTimeMillis(),
     val front: String = "", // front field value
     val back: String = "", // back field value
     val tags: String = "", // space-separated (might be helpful to have this as a join table in the future)
-    val isSynced: Boolean = false, // Indicates if the card is synced with the server
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = System.currentTimeMillis(), // unix timestamp in seconds
+    var difficulty: Float = 1f, // difficulty rating
+    var lastReviewed: Long = 0L // unix timestamp in seconds of last review
 )
 
 class Converters {

@@ -107,6 +107,8 @@ fun QuizScreen(
                     onClick = {
                         viewModel.rateCard(sliderPosition.roundToInt())
                         viewModel.insertQuizQuestion(cardId = card.id, rating = sliderPosition.toInt())
+//                        viewModel.rateCard(sliderPosition)
+//                        viewModel.insertQuizQuestion(cardId = card.id, rating = sliderPosition.roundToInt())
                         showBack = false
                     },
                     modifier = Modifier.padding(top = 16.dp)

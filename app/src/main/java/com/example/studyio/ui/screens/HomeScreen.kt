@@ -300,40 +300,42 @@ fun HomeScreen(
         }
 
         // Deck management dialog
-        deckToManage?.let { deck ->
+        deckToManage?.let { originalDeck ->
+            // Find the current version of the deck from the state
+            val currentDeck = activeDecks.find { it.deck.id == originalDeck.id }?.deck 
+                ?: archivedDecks.find { it.deck.id == originalDeck.id }?.deck 
+                ?: originalDeck
+            
             DeckManagementModal(
-                deck = deck,
+                deck = currentDeck,
                 user = user,
                 onDismiss = { deckToManage = null },
                 onNavigateToAuth = onNavigateToAuth,
                 onTogglePrivacy = {
-                    val updatedDeck = deck.copy(isPublic = !deck.isPublic)
+                    val updatedDeck = currentDeck.copy(isPublic = !currentDeck.isPublic)
                     homeViewModel.updateDeck(updatedDeck)
-                    deckToManage = null
                 },
                 onToggleArchive = {
-                    val newState = if (deck.state == DeckState.ARCHIVED) DeckState.ACTIVE else DeckState.ARCHIVED
-                    val updatedDeck = deck.copy(state = newState)
+                    val newState = if (currentDeck.state == DeckState.ARCHIVED) DeckState.ACTIVE else DeckState.ARCHIVED
+                    val updatedDeck = currentDeck.copy(state = newState)
                     homeViewModel.updateDeck(updatedDeck)
-                    deckToManage = null
                 },
                 onDelete = {
-                    onDeleteDeck(deck)
+                    onDeleteDeck(currentDeck)
                     deckToManage = null
                 },
                 onUpdateSchedule = { schedule ->
-                    val updatedDeck = deck.copy(studySchedule = schedule)
+                    val updatedDeck = currentDeck.copy(studySchedule = schedule)
                     homeViewModel.updateDeck(updatedDeck)
-                    deckToManage = null
+                    // Modal stays open after schedule update
                 },
                 onShare = { email ->
                     try {
-                        sendDeckByEmail(context, deck, email)
+                        sendDeckByEmail(context, currentDeck, email)
                         Toast.makeText(context, "Sharing deck...", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         Toast.makeText(context, "Failed to share deck: ${e.message}", Toast.LENGTH_LONG).show()
                     }
-                    deckToManage = null // Close modal after sharing attempt
                 }
             )
         }

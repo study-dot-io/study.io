@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.entities.Card
 import com.example.studyio.data.entities.CardRepository
+import com.example.studyio.data.entities.DeckRepository
 import com.example.studyio.data.entities.QuizQuestion
 import com.example.studyio.data.entities.QuizQuestionRepository
 import com.example.studyio.data.entities.QuizSession
@@ -20,7 +21,8 @@ import javax.inject.Inject
 class QuizViewModel @Inject constructor(
     private val cardRepository: CardRepository,
     private val quizSessionRepository: QuizSessionRepository,
-    private val quizQuestionRepository: QuizQuestionRepository
+    private val quizQuestionRepository: QuizQuestionRepository,
+    private val deckRepository: DeckRepository
 ) : ViewModel() {
     private val _dueCards = MutableStateFlow<List<Card>>(emptyList())
     val dueCards: StateFlow<List<Card>> = _dueCards
@@ -79,6 +81,14 @@ class QuizViewModel @Inject constructor(
             if (session != null) {
                 val completedSession = session.copy(completedAt = System.currentTimeMillis())
                 quizSessionRepository.updateQuizSession(completedSession)
+                
+                // Check if deck streak should be updated
+                val deck = deckRepository.getDeckById(session.deckId)
+                if (deck != null) {
+                    val newStreak = deck.streak + 1  // TODO: logic here can be made more robust (e.g. check for last completed date or align with study schedule but whatever)
+                    deckRepository.updateDeck(deck.copy(streak = newStreak))
+                }
+                
                 _currentSession.value = completedSession
             }
             _isComplete.value = true

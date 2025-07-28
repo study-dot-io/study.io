@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +33,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.studyio.data.entities.Deck
+import com.example.studyio.utils.StudyScheduleUtils
+import com.example.studyio.ui.screens.components.ScheduleSelectionDialog
 import androidx.core.graphics.toColorInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +60,8 @@ fun CreateDeckScreen(
     var deckName by remember { mutableStateOf("") }
     var deckDescription by remember { mutableStateOf("") }
     var selectedColor by remember { mutableStateOf("#6366F1") }
+    var selectedSchedule by remember { mutableStateOf(listOf<Int>()) }
+    var showScheduleDialog by remember { mutableStateOf(false) }
     
     val deckColors = remember {
         listOf(
@@ -70,6 +78,17 @@ fun CreateDeckScreen(
     
     val isFormValid = remember(deckName) {
         deckName.trim().isNotEmpty()
+    }
+
+    if (showScheduleDialog) {
+        ScheduleSelectionDialog(
+            currentSchedule = selectedSchedule,
+            onDismiss = { showScheduleDialog = false },
+            onConfirm = { selectedDays ->
+                selectedSchedule = selectedDays
+                showScheduleDialog = false
+            }
+        )
     }
 
     Scaffold(
@@ -180,6 +199,64 @@ fun CreateDeckScreen(
                 }
             }
             
+            // Study Schedule Selection
+            Column {
+                Text(
+                    text = "Study Schedule",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showScheduleDialog = true },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (selectedSchedule.isEmpty()) "No schedule set" else StudyScheduleUtils.formatSchedule(
+                                    StudyScheduleUtils.createScheduleBitmask(selectedSchedule)
+                                ),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (selectedSchedule.isNotEmpty()) {
+                                Text(
+                                    text = "Tap to modify",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            } else {
+                                Text(
+                                    text = "Tap to set study days",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
             Spacer(modifier = Modifier.weight(1f))
             
             // Create Button
@@ -189,7 +266,8 @@ fun CreateDeckScreen(
                         id = java.util.UUID.randomUUID().toString(),
                         name = deckName.trim(),
                         description = deckDescription.trim(),
-                        color = selectedColor
+                        color = selectedColor,
+                        studySchedule = StudyScheduleUtils.createScheduleBitmask(selectedSchedule)
                     )
                     onDeckCreated(newDeck)
                 },

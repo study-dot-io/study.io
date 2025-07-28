@@ -80,32 +80,7 @@ fun QuizScreen(
         if (showBack) {
             Spacer(Modifier.height(16.dp))
             Text("How did you do?", style = MaterialTheme.typography.bodyMedium)
-//            Column(
-//                modifier = Modifier.fillMaxWidth(),
-//                verticalArrangement = Arrangement.SpaceEvenly,
-//                horizontalAlignment = Alignment.CenterHorizontally,
-//            ) {
-//                ReviewButton("Again (1 day)", onClick = {
-//                    viewModel.rateCard(1)
-//                    viewModel.insertQuizQuestion(cardId = card.id, rating = 1)
-//                    showBack = false
-//                })
-//                ReviewButton("Hard (2 days)", onClick = {
-//                    viewModel.rateCard(2)
-//                    viewModel.insertQuizQuestion(cardId = card.id, rating = 2)
-//                    showBack = false
-//                })
-//                ReviewButton("Good (3 days)", onClick = {
-//                    viewModel.rateCard(3)
-//                    viewModel.insertQuizQuestion(cardId = card.id, rating = 3)
-//                    showBack = false
-//                })
-//                ReviewButton("Easy (4 days)", onClick = {
-//                    viewModel.rateCard(4)
-//                    viewModel.insertQuizQuestion(cardId = card.id, rating = 4)
-//                    showBack = false
-//                })
-//            }
+
             var sliderPosition by remember { mutableStateOf(3f) }
             Column(
                 modifier = Modifier

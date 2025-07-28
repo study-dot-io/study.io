@@ -20,7 +20,7 @@ fun ProposedCardsDialog(
     onDismiss: () -> Unit
 ) {
     var selectedCards by remember { 
-        mutableStateOf(proposedCards.associateWith { true }.toMutableMap())
+        mutableStateOf(proposedCards.associateWith { true })
     }
     
     Dialog(
@@ -59,14 +59,14 @@ fun ProposedCardsDialog(
                     Column {
                         TextButton(
                             onClick = {
-                                selectedCards = selectedCards.mapValues { true }.toMutableMap()
+                                selectedCards = selectedCards.mapValues { true }
                             }
                         ) {
                             Text("Select All")
                         }
                         TextButton(
                             onClick = {
-                                selectedCards = selectedCards.mapValues { false }.toMutableMap()
+                                selectedCards = selectedCards.mapValues { false }
                             }
                         ) {
                             Text("Deselect All")
@@ -91,7 +91,9 @@ fun ProposedCardsDialog(
                             card = card,
                             isSelected = selectedCards[card] == true,
                             onSelectionChanged = { isSelected ->
-                                selectedCards[card] = isSelected
+                                selectedCards = selectedCards.toMutableMap().apply {
+                                    this[card] = isSelected
+                                }.toMap()
                             }
                         )
                     }

@@ -30,6 +30,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.data.api.ApiResult
 import com.example.studyio.data.api.GeneratedCard
 import com.example.studyio.data.entities.Card
+import com.example.studyio.events.Events
+import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.screens.components.DocumentUploadViewModel
 import com.example.studyio.ui.screens.components.ProposedCardsDialog
 import com.google.firebase.auth.FirebaseAuth
@@ -209,7 +211,7 @@ fun DeckDetailScreen(deckId: String, onBack: () -> Unit, onCreateCardPressed: ()
                         is ApiResult.Success -> {
                             Log.d("DeckDetailScreen", "Cards added successfully: ${result.data}")
                             Toast.makeText(context, result.data, Toast.LENGTH_SHORT).show()
-                            viewModel.loadCards(deckId) // Refresh the cards list
+                            Events.decksUpdated()
                         }
                         is ApiResult.Error -> {
                             Log.e("DeckDetailScreen", "Error adding cards: ${result.message}")

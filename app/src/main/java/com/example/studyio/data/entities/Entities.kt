@@ -32,7 +32,7 @@ data class Deck(
     val name: String,
     val description: String? = null,
     val color: String = "#6366F1", // Default primary color
-    val isSynced: Boolean = false, // Indicates if the deck is synced with the server. If we supoprt updating, change to syncedAt
+    val isSynced: Boolean = false, // Indicates if the deck is synced with the server. If we support updating, change to syncedAt
     val isPublic: Boolean = true,
     var state: DeckState = DeckState.ACTIVE,
     var studySchedule: Int = 0, // Bitmask for days of the week
@@ -75,7 +75,7 @@ data class Card(
     val front: String = "", // front field value
     val back: String = "", // back field value
     val tags: String = "", // space-separated (might be helpful to have this as a join table in the future)
-    val isSynced: Boolean = false // Indicates if the card is synced with the server
+    val isSynced: Boolean = false, // Indicates if the card is synced with the server
     val createdAt: Long = System.currentTimeMillis(),
 )
 

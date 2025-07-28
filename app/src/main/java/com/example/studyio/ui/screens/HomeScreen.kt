@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,6 +46,7 @@ fun HomeScreen(
     onNavigateToAuth: () -> Unit = {},
 ) {
     var deckToManage by remember { mutableStateOf<Deck?>(null) }
+    var isSyncing by remember { mutableStateOf(false) }
     val authViewModel: AuthViewModel = hiltViewModel()
     val homeViewModel: HomeViewModel = hiltViewModel()
     val user by authViewModel.currentUser.collectAsState()
@@ -52,6 +54,7 @@ fun HomeScreen(
     val archivedDecks by homeViewModel.archivedDecks.collectAsState()
     val selectedTab by homeViewModel.selectedTab.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -237,13 +240,66 @@ fun HomeScreen(
                         }
                     }
                     
-                    // Section title for decks
-                    Text(
-                        text = if (selectedTab == DeckTab.ACTIVE) "Your Decks" else "Archived Decks",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
-                    )
+                    // Section title for decks with sync button
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (selectedTab == DeckTab.ACTIVE) "Your Decks" else "Archived Decks",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        
+                        // Sync button - only show for authenticated users
+                        if (user != null) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Sync",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                IconButton(
+                                    onClick = {
+                                        if (!isSyncing) {
+                                            isSyncing = true
+                                            scope.launch {
+                                                try {
+                                                    homeViewModel.onSync()
+                                                    Toast.makeText(context, "Sync completed successfully", Toast.LENGTH_SHORT).show()
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Sync failed: ${e.message}", Toast.LENGTH_LONG).show()
+                                                } finally {
+                                                    isSyncing = false
+                                                }
+                                            }
+                                        }
+                                    },
+                                    enabled = !isSyncing
+                                ) {
+                                    if (isSyncing) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Sync,
+                                            contentDescription = "Sync data",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 
                 // Show message if no decks in this tab

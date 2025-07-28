@@ -1,32 +1,24 @@
 package com.example.studyio.ui.screens
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.data.entities.Card
@@ -41,7 +33,6 @@ fun DeckDetailScreen(deckId: String, onBack: () -> Unit, onCreateCardPressed: ()
         viewModel.loadCards(deckId)
     }
 
-    // Use Scaffold for proper screen structure and dialog overlay
     Scaffold(
         topBar = {
             TopAppBar(
@@ -54,17 +45,15 @@ fun DeckDetailScreen(deckId: String, onBack: () -> Unit, onCreateCardPressed: ()
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateCardPressed
-            ) {
+            FloatingActionButton(onClick = onCreateCardPressed) {
                 Icon(Icons.Default.Add, contentDescription = "Add Card")
             }
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
-                .padding(paddingValues) // Apply padding from Scaffold
-                .padding(horizontal = 16.dp) // Add horizontal padding for content
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -75,31 +64,76 @@ fun DeckDetailScreen(deckId: String, onBack: () -> Unit, onCreateCardPressed: ()
                 CardGrid(cards = cards)
             }
         }
-
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun CardGrid(cards: List<Card>) {
+    val flippedStates = remember(cards) {
+        mutableStateMapOf<String, Boolean>().apply {
+            cards.forEach { put(it.id, false) }
+        }
+    }
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(160.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(8.dp)
     ) {
-        items(cards.size) { index ->
-            val card = cards[index]
+        items(cards, key = { it.id }) { card ->
+            val isFlipped = flippedStates[card.id] ?: false
+
             Card(
                 modifier = Modifier
                     .padding(8.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .clickable { flippedStates[card.id] = !isFlipped },
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                    containerColor = if (isFlipped)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.secondary
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Front: ${card.front}", style = MaterialTheme.typography.bodyMedium)
-                    Text("Back: ${card.back}", style = MaterialTheme.typography.bodyMedium)
-                    if (card.tags.isNotBlank()) {
-                        Text("Tags: ${card.tags}", style = MaterialTheme.typography.bodySmall)
+                AnimatedContent(
+                    targetState = isFlipped,
+                    transitionSpec = { fadeIn() with fadeOut() },
+                    label = "CardFlip"
+                ) { flipped ->
+                    Box(
+                        modifier = Modifier
+                            .height(140.dp)
+                            .fillMaxWidth()
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = if (flipped) "Back" else "Front",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp)
+                        )
+
+                        Text(
+                            text = if (flipped) card.back else card.front,
+                            style = MaterialTheme.typography.titleLarge.copy(color = Color.White),
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center
+                        )
+
+                        if (card.tags.isNotBlank()) {
+                            Text(
+                                text = "Tags: ${card.tags}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(top = 8.dp)
+                            )
+                        }
                     }
                 }
             }

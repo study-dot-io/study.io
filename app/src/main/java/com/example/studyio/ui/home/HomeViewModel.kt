@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.entities.Deck
 import com.example.studyio.data.entities.DeckRepository
+import com.example.studyio.data.sync.SyncService
 import com.example.studyio.events.Events
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val deckRepository: DeckRepository
+    private val deckRepository: DeckRepository,
+    private val syncService: SyncService
 ) : ViewModel() {
     private val _decks = MutableStateFlow<List<Deck>>(emptyList())
     private val _cardCountMap = MutableStateFlow<Map<String, Int>>(emptyMap())
@@ -28,6 +30,13 @@ class HomeViewModel @Inject constructor(
             Events.deckUpdated.collectLatest {
                 loadDecks()
             }
+        }
+        onSync()
+    }
+
+    fun onSync() {
+        viewModelScope.launch {
+            syncService.sync()
         }
     }
 

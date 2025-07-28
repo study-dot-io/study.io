@@ -1,5 +1,7 @@
 package com.example.studyio.data.api
 
+import com.example.studyio.data.entities.Card
+import com.example.studyio.data.entities.Deck
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
 import okhttp3.OkHttpClient
@@ -86,7 +88,36 @@ class StudyioApiClient @Inject constructor() {
             ApiResult.Error("Network error: ${e.message}")
         }
     }
-    
+
+    /**
+     *
+     */
+    suspend fun syncData(decks: List<Deck>, cards: List<Card>): ApiResult<Void> {
+        val token = getFirebaseIdToken()
+        if (token == null) {
+            return ApiResult.Error("No Firebase token available - user not authenticated")
+        }
+
+        return try {
+            val request = SyncRequest(
+                token = token,
+                decks = decks,
+                cards = cards
+            )
+            val response = apiService.sync(request)
+
+            if (response.isSuccessful) {
+                @Suppress("UNCHECKED_CAST")
+                ApiResult.Success(null) as ApiResult<Void>
+            } else {
+                ApiResult.Error("HTTP ${response.code()}: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            ApiResult.Error("Network error: ${e.message}")
+        }
+    }
+
+
     /**
      * MAIN EXAMPLE: Access protected route with Firebase authentication
      */

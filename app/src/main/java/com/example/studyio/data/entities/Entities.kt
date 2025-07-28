@@ -13,13 +13,18 @@ import androidx.room.TypeConverter
  * @param description Optional description of the deck
  * @param color Color hex string for UI display
  */
-@Entity(tableName = "decks")
+@Entity(tableName = "decks",
+    indices = [
+        Index(value = ["isSynced"])
+    ]
+)
 data class Deck(
     @PrimaryKey
     val id: String = java.util.UUID.randomUUID().toString(),
     val name: String,
     val description: String? = null,
     val color: String = "#6366F1", // Default primary color
+    val isSynced: Boolean = false, // Indicates if the deck is synced with the server. If we supoprt updating, change to syncedAt
     val isPublic: Boolean = true
 )
 
@@ -47,6 +52,7 @@ enum class CardType {
     ],
     indices = [
         Index(value = ["deckId"]),
+        Index(value = ["isSynced"])
     ]
 )
 data class Card(
@@ -59,6 +65,7 @@ data class Card(
     val back: String = "", // back field value
     val tags: String = "", // space-separated (might be helpful to have this as a join table in the future)
     val createdAt: Long = System.currentTimeMillis() / 1000, // unix timestamp in seconds
+    val isSynced: Boolean = false // Indicates if the card is synced with the server
 )
 
 class Converters {

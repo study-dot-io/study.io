@@ -38,22 +38,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.auth.AuthViewModel
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.ui.platform.LocalContext
-import com.firebase.ui.auth.data.model.User
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
-import kotlinx.coroutines.tasks.await
 import android.util.Base64
+import androidx.compose.material.icons.filled.Autorenew
 import org.json.JSONArray
-import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -233,11 +229,29 @@ fun HomeScreen(
                 }
 
                 item {
-                    Text(
-                        text = "Your Decks",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Your Decks",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Button(
+                            onClick = { homeViewModel.onSync() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.Autorenew, contentDescription = "Sync Decks")
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Sync")
+                        }
+                    }
                 }
 
                 items(decks) { deck ->

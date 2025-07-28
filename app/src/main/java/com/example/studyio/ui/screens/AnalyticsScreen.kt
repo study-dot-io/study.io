@@ -170,14 +170,14 @@ fun AnalyticsScreen(
                 ) {
                     Text("Cards You Struggle With", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     worstRatedCards.forEach { (deckId, front, rating) ->
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onDeckSelected(deckId) },
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(front, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                            Text("⭐ $rating", fontSize = 16.sp, fontWeight = FontWeight.Light)
+                            Text("Rating: $rating", fontSize = 16.sp, fontWeight = FontWeight.Light)
                         }
                     }
                 }

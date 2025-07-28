@@ -60,3 +60,56 @@ fun SocialScreen() {
         }
     }
 }
+
+//working function to retrieve friends list from end point from backend service
+//
+//suspend fun getFriends(
+//    user: FirebaseUser,
+//    context: Context
+//): List<String> {
+//    val idTokenResult = user.getIdToken(true).await()
+//    val idToken = idTokenResult.token ?: return emptyList()
+//
+//    val jsonRequest = """
+//        {
+//            "login_token": "$idToken"
+//        }
+//    """.trimIndent()
+//
+//    val requestBody = jsonRequest.toRequestBody("application/json".toMediaTypeOrNull())
+//
+//    val request = Request.Builder()
+//        .url("http://172.20.10.2:5001/get_friends")
+//        .post(requestBody)
+//        .addHeader("Content-Type", "application/json")
+//        .build()
+//
+//    val client = OkHttpClient.Builder()
+//        .connectTimeout(120, TimeUnit.SECONDS)
+//        .writeTimeout(120, TimeUnit.SECONDS)
+//        .readTimeout(120, TimeUnit.SECONDS)
+//        .build()
+//
+//    return withContext(Dispatchers.IO) {
+//        val response = client.newCall(request).execute()
+//        if (!response.isSuccessful) {
+//            Log.e("getFriends", "Request failed: ${response.code}")
+//            return@withContext emptyList()
+//        }
+//
+//        val responseBody = response.body?.string() ?: return@withContext emptyList()
+//        Log.d("getFriends", "Success: $responseBody")
+//
+//        val jsonArray = JSONArray(responseBody)
+//        val firstObject = jsonArray.getJSONObject(0)
+//        val friendsJsonArray = firstObject.getJSONArray("friends")
+//
+//        val names = mutableListOf<String>()
+//        for (i in 0 until friendsJsonArray.length()) {
+//            val friend = friendsJsonArray.getJSONObject(i)
+//            names.add(friend.getString("name"))
+//        }
+//        return@withContext names
+//    }
+//}
+//

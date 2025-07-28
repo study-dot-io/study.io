@@ -10,8 +10,17 @@ import androidx.room.Update
 
 @Dao
 interface DeckDao {
-    @Query("SELECT * FROM decks")
+    @Query("SELECT * FROM decks WHERE state != 2") // Not DELETED
     suspend fun getAllDecks(): List<Deck>
+    
+    @Query("SELECT * FROM decks WHERE state = 0") // ACTIVE
+    suspend fun getActiveDecks(): List<Deck>
+    
+    @Query("SELECT * FROM decks WHERE state = 1") // ARCHIVED
+    suspend fun getArchivedDecks(): List<Deck>
+    
+    @Query("SELECT * FROM decks WHERE id = :deckId AND state != 2") // Not DELETED
+    suspend fun getDeckById(deckId: String): Deck?
 
     @Query("SELECT * from decks where isSynced = 0")
     suspend fun getUnsynced(): List<Deck>
@@ -22,14 +31,11 @@ interface DeckDao {
     @Insert
     suspend fun insertDeck(deck: Deck)
 
-    @Query("DELETE FROM decks WHERE id = :deckId")
-    suspend fun deleteDeck(deckId: String)
-    
-    @Query("SELECT COUNT(*) FROM cards WHERE deckId = :deckId AND due <= strftime('%s', 'now')")
-    suspend fun getDueCardsCount(deckId: String): Int
-
     @Update
     suspend fun updateDeck(deck: Deck)
+
+    @Query("DELETE FROM decks WHERE id = :deckId")
+    suspend fun hardDeleteDeck(deckId: String)
 }
 
 @Dao
@@ -43,9 +49,12 @@ interface CardDao {
     @Query("SELECT * FROM cards WHERE deckId = :deckId ORDER BY createdAt DESC")
     suspend fun getCardsByDeckId(deckId: String): List<Card>
 
-    @Query("SELECT * FROM cards WHERE deckId = :deckId AND due <= strftime('%s', 'now') ORDER BY due ASC LIMIT :limit")
-    suspend fun getDueCards(deckId: String, limit: Int): List<Card>
+    @Query("SELECT * FROM cards WHERE deckId = :deckId AND due <= :before ORDER BY due ASC")
+    suspend fun getDueCardsBefore(deckId: String, before: Long = System.currentTimeMillis()): List<Card>
 
+    @Query("SELECT COUNT(*) FROM cards WHERE deckId = :deckId AND due <= :before")
+    suspend fun getDueCardCountBefore(deckId: String, before: Long = System.currentTimeMillis()): Int
+    
     @Update
     suspend fun updateCard(card: Card)
 
@@ -78,6 +87,9 @@ interface QuizSessionDao {
 
     @Query("SELECT * FROM quiz_sessions WHERE deckId = :deckId AND completedAt IS NULL")
     suspend fun getOngoingSession(deckId: String): QuizSession?
+    
+    @Query("SELECT MAX(completedAt) FROM quiz_sessions WHERE deckId = :deckId AND completedAt IS NOT NULL")
+    suspend fun getLastCompletedSessionDate(deckId: String): Long?
 }
 
 @Dao
@@ -127,3 +139,4 @@ abstract class StudyioDatabase : RoomDatabase() {
     abstract fun quizSessionDao(): QuizSessionDao
     abstract fun quizQuestionDao(): QuizQuestionDao
 }
+

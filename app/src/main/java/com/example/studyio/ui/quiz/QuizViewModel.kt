@@ -1,9 +1,11 @@
 package com.example.studyio.ui.quiz
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.entities.Card
 import com.example.studyio.data.entities.CardRepository
+import com.example.studyio.data.entities.DeckRepository
 import com.example.studyio.data.entities.QuizQuestion
 import com.example.studyio.data.entities.QuizQuestionRepository
 import com.example.studyio.data.entities.QuizSession
@@ -19,7 +21,8 @@ import javax.inject.Inject
 class QuizViewModel @Inject constructor(
     private val cardRepository: CardRepository,
     private val quizSessionRepository: QuizSessionRepository,
-    private val quizQuestionRepository: QuizQuestionRepository
+    private val quizQuestionRepository: QuizQuestionRepository,
+    private val deckRepository: DeckRepository
 ) : ViewModel() {
     private val _dueCards = MutableStateFlow<List<Card>>(emptyList())
     val dueCards: StateFlow<List<Card>> = _dueCards
@@ -32,7 +35,7 @@ class QuizViewModel @Inject constructor(
 
     fun loadQuiz(deckId: String) {
         viewModelScope.launch {
-            val cards = cardRepository.getDueCards(deckId, 200)
+            val cards = cardRepository.getDueCards(deckId)
             _dueCards.value = cards
             _currentIndex.value = 0
             _isComplete.value = cards.isEmpty()
@@ -58,11 +61,11 @@ class QuizViewModel @Inject constructor(
         viewModelScope.launch {
             cardRepository.updateCard(
                 card.copy(
-                    due = System.currentTimeMillis() / 1000 + (rating * 24 * 60 * 60)
-                )
+                    due = System.currentTimeMillis() + (rating * 24 * 60 * 60 * 1000), // Adjust due date based on rating
+                ) 
             )
-            // Fire event after every card is answered
             Events.decksUpdated()
+            // Fire event after every card is answered
             val nextIndex = idx + 1
             if (nextIndex >= cards.size) {
                 _isComplete.value = true
@@ -78,9 +81,18 @@ class QuizViewModel @Inject constructor(
             if (session != null) {
                 val completedSession = session.copy(completedAt = System.currentTimeMillis())
                 quizSessionRepository.updateQuizSession(completedSession)
+                
+                // Check if deck streak should be updated
+                val deck = deckRepository.getDeckById(session.deckId)
+                if (deck != null) {
+                    val newStreak = deck.streak + 1  // TODO: logic here can be made more robust (e.g. check for last completed date or align with study schedule but whatever)
+                    deckRepository.updateDeck(deck.copy(streak = newStreak))
+                }
+                
                 _currentSession.value = completedSession
             }
             _isComplete.value = true
+            Events.quizCompleted() 
         }
     }
 

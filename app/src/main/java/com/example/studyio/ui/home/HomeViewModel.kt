@@ -3,10 +3,13 @@ package com.example.studyio.ui.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.studyio.data.entities.CardRepository
 import com.example.studyio.data.entities.Deck
 import com.example.studyio.data.entities.DeckRepository
 import com.example.studyio.data.sync.SyncService
+import com.example.studyio.data.entities.QuizSessionRepository
 import com.example.studyio.events.Events
+import com.example.studyio.utils.StudyScheduleUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,15 +17,29 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * DTO for enhanced deck information including computed fields
+ */
+data class DeckInfo(
+    val deck: Deck,
+    val dueCardsCount: Int,
+    val hasCompletedToday: Boolean
+)
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val deckRepository: DeckRepository,
-    private val syncService: SyncService
+    private val syncService: SyncService,
+    private val cardRepository: CardRepository,
+    private val quizSessionRepository: QuizSessionRepository
 ) : ViewModel() {
-    private val _decks = MutableStateFlow<List<Deck>>(emptyList())
-    private val _cardCountMap = MutableStateFlow<Map<String, Int>>(emptyMap())
-    val decks: StateFlow<List<Deck>> = _decks
-    val cardCountMap: StateFlow<Map<String, Int>> = _cardCountMap
+    private val _activeDecks = MutableStateFlow<List<DeckInfo>>(emptyList())
+    private val _archivedDecks = MutableStateFlow<List<DeckInfo>>(emptyList())
+    private val _selectedTab = MutableStateFlow(DeckTab.ACTIVE)
+    
+    val activeDecks: StateFlow<List<DeckInfo>> = _activeDecks
+    val archivedDecks: StateFlow<List<DeckInfo>> = _archivedDecks
+    val selectedTab: StateFlow<DeckTab> = _selectedTab
 
     init {
         loadDecks()
@@ -31,7 +48,17 @@ class HomeViewModel @Inject constructor(
                 loadDecks()
             }
         }
+        
+        viewModelScope.launch {
+            Events.quizCompleted.collectLatest {
+                loadDecks()
+            }
+        }
         onSync()
+    }
+
+    fun setSelectedTab(tab: DeckTab) {
+        _selectedTab.value = tab
     }
 
     fun onSync() {
@@ -42,40 +69,55 @@ class HomeViewModel @Inject constructor(
 
     fun loadDecks() {
         viewModelScope.launch {
-            _decks.value = deckRepository.getAllDecks()
-            // Fetch card counts to enhance the deck information; TODO: make this more efficient if this becomes a bottleneck
-            val deckCounts = mutableMapOf<String, Int>()
-            _decks.value.forEach { deck ->
-                val count = deckRepository.getDueCardsCount(deck.id)
-                deckCounts[deck.id] = count
-            }
-            
-            _cardCountMap.value = deckCounts
+            _activeDecks.value = createDeckInfoList(deckRepository.getActiveDecks())
+            _archivedDecks.value = createDeckInfoList(deckRepository.getArchivedDecks())
+        }
+    }
+
+    private suspend fun createDeckInfoList(decks: List<Deck>): List<DeckInfo> {
+        return decks.map { deck ->
+            val dueCardsCount = cardRepository.getDueCardsCount(deck.id)
+            val lastCompletedDate = quizSessionRepository.getLastCompletedSessionDate(deck.id)
+            val hasCompletedToday = lastCompletedDate?.let {
+                StudyScheduleUtils.isCurrentDay(it)
+            } == true
+            DeckInfo(
+                deck = deck,
+                dueCardsCount = dueCardsCount,
+                hasCompletedToday = hasCompletedToday
+            )
         }
     }
 
     fun createDeck(deck: Deck, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
             deckRepository.insertDeck(deck)
-            loadDecks()
+            Events.decksUpdated()
+        }
+        onComplete?.invoke()
+    }
+    
+    fun updateDeck(deck: Deck, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            deckRepository.updateDeck(deck)
+            Events.decksUpdated()
             onComplete?.invoke()
         }
     }
 
     fun deleteDeck(deckId: String, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
-            deckRepository.deleteDeck(deckId)
-            loadDecks()
+            deckRepository.softDeleteDeck(deckId)
+            Events.decksUpdated()
             onComplete?.invoke()
         }
     }
 
-    fun updateDeck(deck: Deck) {
-        viewModelScope.launch {
-            Log.d("HomeViewModel", "Updating deck: ${deck.name}, isPublic = ${deck.isPublic}")
-            deckRepository.updateDeck(deck)
-//            loadDecks() // refresh UI after update
-            Events.decksUpdated()
-        }
-    }
 }
+
+enum class DeckTab {
+    ACTIVE, ARCHIVED
+}
+
+
+

@@ -3,13 +3,21 @@ package com.example.studyio.ui
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.studyio.ui.home.HomeViewModel
 import com.example.studyio.ui.importer.ImportViewModel
@@ -25,10 +33,6 @@ import com.example.studyio.ui.screens.SocialScreen
 
 import com.example.studyio.ui.screens.BottomNavBar
 import com.example.studyio.ui.screens.bottomNavItems
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.ui.Modifier
 
 @Composable
 fun StudyIONavHost() {
@@ -36,7 +40,6 @@ fun StudyIONavHost() {
     val navController = rememberNavController()
     val homeViewModel: HomeViewModel = hiltViewModel()
     val importViewModel: ImportViewModel = hiltViewModel()
-    val decks by homeViewModel.decks.collectAsState()
     val isImporting by importViewModel.isImporting.collectAsState()
     val importMessage by importViewModel.importMessage.collectAsState()
 
@@ -61,8 +64,17 @@ fun StudyIONavHost() {
 
     Scaffold(
         bottomBar = {
-            if (showBottomBar) BottomNavBar(navController)
-        }
+            if (showBottomBar) {
+                // Apply window insets padding to extend behind navigation bar
+                Box(
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                ) {
+                    BottomNavBar(navController)
+                }
+            }
+        },
+        // Set contentWindowInsets to empty to manually handle insets
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -71,23 +83,14 @@ fun StudyIONavHost() {
         ) {
             composable("home") {
                 HomeScreen(
-                    decks = decks,
-                    dueCards = 0, // TODO: wire up real values
-                    todayReviews = 0,
-                    totalCards = 0,
-                    totalDecks = decks.size,
                     isImporting = isImporting,
                     importMessage = importMessage,
                     onDeckClick = { deck -> navController.navigate("decks/${deck.id}") },
                     onCreateDeck = { navController.navigate("decks/create") },
-                    onStudyNow = {
-                        val firstDeckId = decks.firstOrNull()?.id
-                        if (firstDeckId != null) navController.navigate("quiz/decks/${firstDeckId}")
-                    },
                     onImportApkg = { importApkgLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
                     onStudyNowForDeck = { deck -> navController.navigate("quiz/decks/${deck.id}") },
                     onDeleteDeck = { deck -> homeViewModel.deleteDeck(deck.id) },
-                    onNavigateToAuth = { navController.navigate("auth") },
+                    onNavigateToAuth = { navController.navigate("auth") }
                 )
             }
 
@@ -159,3 +162,4 @@ fun StudyIONavHost() {
         }
     }
 }
+

@@ -4,7 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.with
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -82,7 +82,7 @@ fun CardGrid(cards: List<Card>) {
         contentPadding = PaddingValues(8.dp)
     ) {
         items(cards, key = { it.id }) { card ->
-            val isFlipped = flippedStates[card.id] ?: false
+            val isFlipped = flippedStates[card.id] == true
 
             Card(
                 modifier = Modifier
@@ -99,7 +99,7 @@ fun CardGrid(cards: List<Card>) {
             ) {
                 AnimatedContent(
                     targetState = isFlipped,
-                    transitionSpec = { fadeIn() with fadeOut() },
+                    transitionSpec = { fadeIn().togetherWith(fadeOut()) },
                     label = "CardFlip"
                 ) { flipped ->
                     Box(

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.studyio.data.entities.CardRepository
 import com.example.studyio.data.entities.Deck
 import com.example.studyio.data.entities.DeckRepository
+import com.example.studyio.data.sync.SyncService
 import com.example.studyio.data.entities.QuizSessionRepository
 import com.example.studyio.events.Events
 import com.example.studyio.utils.StudyScheduleUtils
@@ -28,6 +29,7 @@ data class DeckInfo(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val deckRepository: DeckRepository,
+    private val syncService: SyncService,
     private val cardRepository: CardRepository,
     private val quizSessionRepository: QuizSessionRepository
 ) : ViewModel() {
@@ -52,10 +54,17 @@ class HomeViewModel @Inject constructor(
                 loadDecks()
             }
         }
+        onSync()
     }
 
     fun setSelectedTab(tab: DeckTab) {
         _selectedTab.value = tab
+    }
+
+    fun onSync() {
+        viewModelScope.launch {
+            syncService.sync()
+        }
     }
 
     fun loadDecks() {

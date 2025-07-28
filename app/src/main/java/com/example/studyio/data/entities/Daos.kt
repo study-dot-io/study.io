@@ -22,6 +22,12 @@ interface DeckDao {
     @Query("SELECT * FROM decks WHERE id = :deckId AND state != 2") // Not DELETED
     suspend fun getDeckById(deckId: String): Deck?
 
+    @Query("SELECT * from decks where isSynced = 0")
+    suspend fun getUnsynced(): List<Deck>
+
+    @Query("UPDATE decks SET isSynced = 1 WHERE isSynced = 0")
+    suspend fun markAllSynced()
+
     @Insert
     suspend fun insertDeck(deck: Deck)
 
@@ -54,6 +60,12 @@ interface CardDao {
 
     @Query("SELECT COUNT(*) FROM cards")
     suspend fun getTotalCardsCreated(): Int
+
+    @Query("SELECT * from cards where isSynced = 0")
+    suspend fun getUnsynced(): List<Card>
+
+    @Query("UPDATE cards SET isSynced = 1 WHERE isSynced = 0")
+    suspend fun markAllSynced()
 }
 
 @Dao

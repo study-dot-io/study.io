@@ -21,17 +21,22 @@ enum class DeckState {
  * @param streak Current study streak (number of consecutive days studied)
  * @param isPublic Whether the deck is public or private
  */
-@Entity(tableName = "decks")
+@Entity(tableName = "decks",
+    indices = [
+        Index(value = ["isSynced"])
+    ]
+)
 data class Deck(
     @PrimaryKey
     val id: String = java.util.UUID.randomUUID().toString(),
-    var name: String,
-    var description: String? = null,
-    var color: String = "#FFFFFF",
+    val name: String,
+    val description: String? = null,
+    val color: String = "#6366F1", // Default primary color
+    val isSynced: Boolean = false, // Indicates if the deck is synced with the server. If we supoprt updating, change to syncedAt
+    val isPublic: Boolean = true,
     var state: DeckState = DeckState.ACTIVE,
     var studySchedule: Int = 0, // Bitmask for days of the week
     var streak: Int = 0,
-    var isPublic: Boolean = true
 )
 
 enum class CardType {
@@ -58,6 +63,7 @@ enum class CardType {
     ],
     indices = [
         Index(value = ["deckId"]),
+        Index(value = ["isSynced"])
     ]
 )
 data class Card(
@@ -69,6 +75,7 @@ data class Card(
     val front: String = "", // front field value
     val back: String = "", // back field value
     val tags: String = "", // space-separated (might be helpful to have this as a join table in the future)
+    val isSynced: Boolean = false // Indicates if the card is synced with the server
     val createdAt: Long = System.currentTimeMillis(),
 )
 

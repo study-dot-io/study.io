@@ -33,4 +33,10 @@ interface StudyioApiService {
     suspend fun getProtectedData(
         @Header("Authorization") authorization: String
     ): Response<AuthResponse>
+
+
+    @POST("sync")
+    suspend fun sync(
+        @Body request: SyncRequest
+    ): Response<Void>
 }

@@ -1,5 +1,7 @@
 package com.example.studyio.data.api
 
+import com.example.studyio.data.entities.Card
+import com.example.studyio.data.entities.Deck
 import com.google.gson.annotations.SerializedName
 
 /**
@@ -28,4 +30,13 @@ data class HealthResponse(
     val status: String,
     @SerializedName("service")
     val service: String
+)
+
+data class SyncRequest (
+    @SerializedName("token")
+    val token: String,
+    @SerializedName("decks")
+    val decks: List<Deck>,
+    @SerializedName("cards")
+    val cards: List<Card>,
 )

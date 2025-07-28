@@ -36,13 +36,19 @@ interface DeckDao {
 
     @Query("DELETE FROM decks WHERE id = :deckId")
     suspend fun hardDeleteDeck(deckId: String)
+
+    @Query("SELECT * FROM decks")
+    suspend fun getAllDecksStateless(): List<Deck>
 }
 
 @Dao
 interface CardDao {
     @Insert
     suspend fun insertCard(card: Card)
-    
+
+    @Query("SELECT * FROM cards")
+    suspend fun getAllCards(): List<Card>
+
     @Query("SELECT * FROM cards WHERE id IN (:cardIds)")
     suspend fun getCardsById(cardIds: List<String>): List<Card>
     

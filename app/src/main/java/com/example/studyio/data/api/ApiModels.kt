@@ -66,3 +66,11 @@ data class GeneratedCard(
     @SerializedName("back")
     val back: String
 )
+
+
+data class SyncResponse(
+    @SerializedName("decks")
+    val decks: List<Deck>,
+    @SerializedName("cards")
+    val cards: List<Card>,
+)

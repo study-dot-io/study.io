@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.studyio.ui.quiz.QuizViewModel
+import kotlin.math.roundToInt
 
 @Composable
 fun QuizScreen(
@@ -79,31 +80,39 @@ fun QuizScreen(
         if (showBack) {
             Spacer(Modifier.height(16.dp))
             Text("How did you do?", style = MaterialTheme.typography.bodyMedium)
+
+            var sliderPosition by remember { mutableStateOf(3f) }
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.SpaceEvenly,
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ReviewButton("Again (1 day)", onClick = {
-                    viewModel.rateCard(1)
-                    viewModel.insertQuizQuestion(cardId = card.id, rating = 1)
-                    showBack = false
-                })
-                ReviewButton("Hard (2 days)", onClick = {
-                    viewModel.rateCard(2)
-                    viewModel.insertQuizQuestion(cardId = card.id, rating = 2)
-                    showBack = false
-                })
-                ReviewButton("Good (3 days)", onClick = {
-                    viewModel.rateCard(3)
-                    viewModel.insertQuizQuestion(cardId = card.id, rating = 3)
-                    showBack = false
-                })
-                ReviewButton("Easy (4 days)", onClick = {
-                    viewModel.rateCard(4)
-                    viewModel.insertQuizQuestion(cardId = card.id, rating = 4)
-                    showBack = false
-                })
+                Text(
+                    text = "Rate difficulty",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Slider(
+                    value = sliderPosition,
+                    onValueChange = { sliderPosition = it },
+                    valueRange = 1f..5f,
+                    steps = 3,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Text(
+                    text = "Difficulty: ${sliderPosition.toInt()}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Button(
+                    onClick = {
+                        viewModel.rateCard(sliderPosition.roundToInt())
+                        viewModel.insertQuizQuestion(cardId = card.id, rating = sliderPosition.toInt())
+                        showBack = false
+                    },
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Text(text = "Submit Rating")
+                }
             }
         }
     }

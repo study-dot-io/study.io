@@ -1,8 +1,6 @@
 # Study.io
 A note from Max:
 Much of the code generated in my PRs were aided with inline completions and chat completions from Github Copilot (mix of Claude Sonnet 4 and Gemini 2.5 models).
-Due to the fragmented nature of inline completions, it is difficult to provide a complete list of all the code which was generated, so it can be assumed that all of the code was.
-
 As per my discussion with our TA, Albert, on July 31, 2025, the following is sufficient accreditation for my use of AI tools in this project.
 
 

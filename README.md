@@ -1,4 +1,7 @@
 # Study.io
+A note from Max:
+Much of the code generated in my PRs were aided with inline completions and chat completions from Github Copilot (mix of Claude Sonnet 4 and Gemini 2.5 models).
+As per my discussion with our TA, Albert, on July 31, 2025, the following is sufficient accreditation for my use of AI tools in this project.
 
 
 ## Backend layers

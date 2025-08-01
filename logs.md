@@ -36,3 +36,18 @@ Demo work -> sync service    07/27/2025    3:00 PM    11:00 PM    8.00    41.75
 Demo work  -> sync service / pairing with max    07/28/2025    10:00 AM    4:30 PM    6.50    48.25
 Analytics implementation     07/21/2025    10:00 AM    8:00 PM    10.00    58.25
 D6    07/31/2025    4:00 PM    9:00 PM    5.00    63.25
+
+Abhi logs:
+Brainstorming app ideas                          05/27            2       2
+D1 : Functional/Non-functional requirements      06/03 - 06/04    6       8
+Project specs PPT                                07/15            4       12
+Start working on deck share/access layout        07/08            3       15
+Code reviews on app structure                    N/A              2       17
+Group check-ins                                  07/07, 07/16     1       18
+Integrate navbar changes                         07/23            5       23
+Deck access changes                              07/26            6       29
+Deck sharing implementation                      07/26            6       35
+Social page brainstorming                        N/A              3       38
+Social page integration                          07/28            4       42
+Final presentation                               07/28            2       44
+D6                                               07/31            2       46

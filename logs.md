@@ -51,3 +51,29 @@ Social page brainstorming                        N/A              3       38
 Social page integration                          07/28            4       42
 Final presentation                               07/28            2       44
 D6                                               07/31            2       46
+
+
+Aditya Logs
+- **D1: Idea of the app, coming up with requirements, mockups, etc.**  
+  *5–6 hours*  
+
+- **Researched best practices for clean architecture and set up the entire application with proper layers and documentation**  
+  *5–6 hours*  
+
+- **Wrote entire backend structure/entities for initial app demo (under `Ameya/demo-ui`)**  
+  *4–5 hours*  
+
+- **Researched & set up repository for LLM service**:  
+  *3-4 hours*  
+
+- **Worked with Ameya to complete the entire LLM flashcard generation service**  
+  *15 hours*
+
+- **Wrote functionality for uploading PDF documents and calling the API**  
+  *5–6 hours*  
+
+- **Actively participated in all deliverables except D2 and D4**  
+  *6–7 hours*  
+
+- **Did entire architecture section with Ameya for D6**  
+  *5 hours*  

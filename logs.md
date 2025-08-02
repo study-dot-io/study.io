@@ -52,7 +52,6 @@ Social page integration                          07/28            4       42
 Final presentation                               07/28            2       44
 D6                                               07/31            2       46
 
-
 Aditya Logs
 - **D1: Idea of the app, coming up with requirements, mockups, etc.**  
   *5–6 hours*  
@@ -77,3 +76,35 @@ Aditya Logs
 
 - **Did entire architecture section with Ameya for D6**  
   *5 hours*  
+
+# Ameya Logs
+
+- **Ideation Phase** – Brainstormed features, app structure, and user flows before development + D1.  
+  **Estimated Hours:** 6  
+
+- **Navigation & UI Pages Development** – Built out navigation control, persistent navigation bar, and multiple screens (Social, Home, Profile). Implemented components for courses scroll, checklist reminders, and upcoming quizzes display. Designed Profile page with account info and quiz stats. Created landing page with animations and app logo in Canva. Work available in amega/demo-ui branch. Worked on the entire frontend up until this point.  
+  **Estimated Hours:** 14  
+
+- **Backend Service Setup with Aditya** – Designed and implemented initial backend build structure, API endpoints, and integration flow. Coordinated with frontend for seamless data communication.  
+  **Estimated Hours:** 10  
+
+- **AI LLM Integration Research & Implementation** – Researched and tested multiple LLM APIs (OpenAI, OpenRouter), set up accounts, API keys, and `.env` configurations. Built file upload logic, integrated with backend LLM for flashcard generation.  
+  **Estimated Hours:** 8  
+
+- **Social Page & Components** – Built Social page UI again to display user activities, then integrated with backend to pull friend list and display hardcoded activities. Added emoji reaction feature with counters. Added DB connection, page routes, as well as POST and GET methods.  
+  **Estimated Hours:** 6  
+
+- **Flashcard Deck UI & Animations** – Built UI for displaying cards in a deck with flip animations between front (question) and back (answer). Styled and optimized for usability.  
+  **Estimated Hours:** 2  
+
+- **D6 Architecture Component** – Worked on architecture section for D6, identified and documented functional and non-functional requirements, and created diagrams.  
+  **Estimated Hours:** 5  
+
+- **Final Presentation** – Created and prepared the final demo, discussion, and test runs on the app as well as presentation creation.  
+  **Estimated Hours:** 2  
+
+
+
+
+
+

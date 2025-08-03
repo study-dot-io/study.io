@@ -75,6 +75,7 @@ data class Card(
     val front: String = "", // front field value
     val back: String = "", // back field value
     val tags: String = "", // space-separated (might be helpful to have this as a join table in the future)
+    val isSynced: Boolean = false, // Indicates if the card is synced with the server
     val createdAt: Long = System.currentTimeMillis(), // unix timestamp in seconds
     var difficulty: Float = 1f, // difficulty rating
     var lastReviewed: Long = 0L // unix timestamp in seconds of last review

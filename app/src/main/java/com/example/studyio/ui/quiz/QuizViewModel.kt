@@ -10,6 +10,7 @@ import com.example.studyio.data.entities.QuizQuestion
 import com.example.studyio.data.entities.QuizQuestionRepository
 import com.example.studyio.data.entities.QuizSession
 import com.example.studyio.data.entities.QuizSessionRepository
+import com.example.studyio.scheduler.FlashcardScheduler
 import com.example.studyio.events.Events
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,8 @@ class QuizViewModel @Inject constructor(
     private val cardRepository: CardRepository,
     private val quizSessionRepository: QuizSessionRepository,
     private val quizQuestionRepository: QuizQuestionRepository,
-    private val deckRepository: DeckRepository
+    private val deckRepository: DeckRepository,
+    private val flashcardScheduler: FlashcardScheduler
 ) : ViewModel() {
     private val _dueCards = MutableStateFlow<List<Card>>(emptyList())
     val dueCards: StateFlow<List<Card>> = _dueCards
@@ -59,11 +61,10 @@ class QuizViewModel @Inject constructor(
         if (idx >= cards.size) return
         val card = cards[idx]
         viewModelScope.launch {
-            cardRepository.updateCard(
-                card.copy(
-                    due = System.currentTimeMillis() + (rating * 24 * 60 * 60 * 1000), // Adjust due date based on rating
-                ) 
-            )
+
+            flashcardScheduler.updateDifficultyAndDueDate(card, rating.toFloat())
+            cardRepository.updateCard(card)
+
             Events.decksUpdated()
             // Fire event after every card is answered
             val nextIndex = idx + 1

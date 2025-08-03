@@ -103,6 +103,26 @@ Aditya Logs
 - **Final Presentation** – Created and prepared the final demo, discussion, and test runs on the app as well as presentation creation.  
   **Estimated Hours:** 2  
 
+Ethan logs
+- **Brainstorming app ideas** 05/23-7: 3 hours
+- **Nearly all in-class assignments**: 5 hours
+- **D1 Edits, functional/non-functional, user scenarios** 06/03: 5 hours
+- **Project specs slideshow + in class** 06/15: 4 hours
+- **D2 editing** 06/15: 1 hour
+- **Front end for first iteration**: 4 hours
+- **D3** 07/04: 1 hour
+- **Group check-ins** 07/07, 07/16: 1 hour
+- **D4 edits and writing** 07/2: 1 hour
+- **Start work on scheduler** 07/23: 5 hours
+- **D6 2nd half work, edits**: 2 hours
+- **Scheduler front end** 07/28: 4 hours
+- **Scheduler brainstorming and research** 07/28: 4 hours
+- **Final presentation all slides, script, content** 07/28: 5 hours
+- **D6** 07/31: 1 hour
+- **D7** 08/01: 1 hour
+
+
+
 
 
 

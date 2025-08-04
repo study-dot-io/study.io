@@ -119,7 +119,7 @@ Ethan logs
 - **Scheduler brainstorming and research** 07/28: 4 hours
 - **Final presentation all slides, script, content** 07/28: 5 hours
 - **D6** 07/31: 1 hour
-- **D7** 08/01: 1 hour
+- **D7** 08/01: 5 hours
 
 
 
